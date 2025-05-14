@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 import { DisplayProduct } from "@shared/schema";
+import { AddToCartButton } from "@/components/ui/add-to-cart-button";
 
 const FeaturedProducts = () => {
   const { data: featuredProducts, isLoading, error } = useQuery<DisplayProduct[]>({
@@ -59,7 +60,12 @@ const FeaturedProductCard = ({ product }: FeaturedProductCardProps) => {
       <div className="flex justify-center mb-4">
         <span className="font-semibold text-lg">{product.formattedPrice}</span>
       </div>
-      <ProductCard.AddToCartButton productId={product.id} />
+      <AddToCartButton 
+        productId={product.id}
+        productName={product.name} 
+        className="w-full"
+        variant="default"
+      />
     </div>
   );
 };

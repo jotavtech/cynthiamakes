@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { X, Star, StarHalf, Plus, Minus } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
-import { useToast } from "@/hooks/use-toast";
 import { DisplayProduct } from "@shared/schema";
-import { useCartUI } from "@/context/CartUIContext";
+import { AddToCartButton } from "@/components/ui/add-to-cart-button";
 
 interface ProductQuickViewProps {
   product: DisplayProduct;
@@ -12,41 +10,9 @@ interface ProductQuickViewProps {
 }
 
 const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) => {
-  // Use todas as funções fora do handleAddToCart para evitar erros
-  const { addToCartAndOpen } = useCart();
-  const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
-  const [isAdding, setIsAdding] = useState(false);
 
   if (!isOpen) return null;
-
-  const handleAddToCart = async () => {
-    setIsAdding(true);
-    try {
-      // Usar a função importada no início
-      const success = await addToCartAndOpen(product.id, quantity);
-      
-      if (success) {
-        toast({
-          title: "Produto adicionado",
-          description: `${product.name} foi adicionado ao carrinho.`,
-        });
-        // Fechar o modal de visualização rápida
-        onClose();
-      } else {
-        throw new Error("Falha ao adicionar produto");
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o produto ao carrinho.",
-        variant: "destructive",
-      });
-      console.error("[ProductQuickView] Erro ao adicionar ao carrinho:", error);
-    } finally {
-      setIsAdding(false);
-    }
-  };
 
   const increaseQuantity = () => {
     setQuantity(prev => prev + 1);
@@ -142,13 +108,14 @@ const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) =
             </div>
             
             {/* Add to cart button */}
-            <button 
-              onClick={handleAddToCart}
-              disabled={isAdding}
-              className="bg-primary text-white py-3 rounded-md hover:bg-opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
-            >
-              {isAdding ? "Adicionando..." : "Adicionar ao Carrinho"}
-            </button>
+            <AddToCartButton 
+              productId={product.id}
+              productName={product.name}
+              className="w-full"
+              quantity={quantity}
+              buttonText="Adicionar ao Carrinho"
+              onSuccess={onClose}
+            />
           </div>
         </div>
       </div>

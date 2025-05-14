@@ -1,56 +1,15 @@
 import { useState } from "react";
 import { Star, StarHalf, Eye } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
-import { useToast } from "@/hooks/use-toast";
 import { DisplayProduct } from "@shared/schema";
 import ProductQuickView from "./ProductQuickView";
-import { useCartUI } from "@/context/CartUIContext";
+import { AddToCartButton } from "@/components/ui/add-to-cart-button";
 
 interface ProductCardProps {
   product: DisplayProduct;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart } = useCart();
-  const { openCart } = useCartUI();
-  const { toast } = useToast();
-  const [isAdding, setIsAdding] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-
-  // Obter a função addToCartAndOpen do hook useCart
-  const { addToCartAndOpen } = useCart();
-  
-  const handleAddToCart = async () => {
-    setIsAdding(true);
-    console.log(`[ProductCard] Tentando adicionar produto ${product.id} (${product.name}) ao carrinho`);
-    
-    try {
-      // Usar a função importada no início
-      const success = await addToCartAndOpen(product.id);
-      
-      if (success) {
-        // Notifica o usuário
-        toast({
-          title: "Produto adicionado",
-          description: `${product.name} foi adicionado ao carrinho.`,
-        });
-        
-        console.log(`[ProductCard] Produto ${product.id} adicionado com sucesso e carrinho aberto`);
-      } else {
-        throw new Error("Falha ao adicionar produto");
-      }
-    } catch (error) {
-      console.error(`[ProductCard] Erro ao adicionar produto ${product.id} ao carrinho:`, error);
-      
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o produto ao carrinho.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAdding(false);
-    }
-  };
   
   const openQuickView = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -108,9 +67,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <ProductRating rating={4.5} />
         </div>
         <AddToCartButton 
-          productId={product.id} 
-          onClick={handleAddToCart}
-          isAdding={isAdding}
+          productId={product.id}
+          productName={product.name}
+          className="w-full"
+          buttonText="Adicionar ao Carrinho"
+          size="default"
+          showIcon={true}
         />
       </div>
       
@@ -146,72 +108,5 @@ const ProductRating = ({ rating }: ProductRatingProps) => {
     </div>
   );
 };
-
-// Add to Cart Button Component
-interface AddToCartButtonProps {
-  productId: number;
-  onClick?: () => void;
-  isAdding?: boolean;
-}
-
-const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButtonProps) => {
-  // Obter a função addToCartAndOpen do contexto aqui para evitar problemas
-  const { addToCartAndOpen } = useCart();
-  const { toast } = useToast();
-  const [isAddingInternal, setIsAddingInternal] = useState(false);
-  
-  const isLoading = isAdding || isAddingInternal;
-  
-  const handleClick = async () => {
-    if (onClick) {
-      console.log("[AddToCartButton] Delegando adição ao carrinho para o componente pai");
-      onClick();
-      return;
-    }
-    
-    console.log(`[AddToCartButton] Tentando adicionar produto ${productId} ao carrinho`);
-    setIsAddingInternal(true);
-    
-    try {
-      // Usar a função que foi obtida no escopo do componente
-      const success = await addToCartAndOpen(productId);
-      
-      if (success) {
-        console.log(`[AddToCartButton] Produto ${productId} adicionado com sucesso e carrinho aberto`);
-        
-        toast({
-          title: "Produto adicionado",
-          description: "O produto foi adicionado ao carrinho.",
-        });
-      } else {
-        throw new Error("Falha ao adicionar produto");
-      }
-    } catch (error) {
-      console.error(`[AddToCartButton] Erro ao adicionar produto ${productId} ao carrinho:`, error);
-      
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o produto ao carrinho.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAddingInternal(false);
-    }
-  };
-  
-  return (
-    <button 
-      onClick={handleClick}
-      disabled={isLoading}
-      className="w-full bg-primary text-white font-medium py-2 rounded-md hover:bg-opacity-90 transition disabled:opacity-70 disabled:cursor-not-allowed"
-    >
-      {isLoading ? "Adicionando..." : "Adicionar ao Carrinho"}
-    </button>
-  );
-};
-
-// Exporting components
-ProductCard.Rating = ProductRating;
-ProductCard.AddToCartButton = AddToCartButton;
 
 export default ProductCard;
