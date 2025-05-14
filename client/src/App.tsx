@@ -29,7 +29,7 @@ function Router() {
 
 function App() {
   // Usamos o hook useCart para obter o estado do carrinho do contexto global
-  const { isCartOpen, toggleCart } = useCart();
+  const { isCartOpen, closeCart } = useCart();
 
   return (
     <TooltipProvider>
@@ -39,7 +39,7 @@ function App() {
         <Router />
       </main>
       
-      {isCartOpen && <CartDrawer onClose={toggleCart} />}
+      {isCartOpen && <CartDrawer />}
       
       <Footer />
       <Toaster />

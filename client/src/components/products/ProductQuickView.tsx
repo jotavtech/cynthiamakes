@@ -11,7 +11,7 @@ interface ProductQuickViewProps {
 }
 
 const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) => {
-  const { addToCart, toggleCart } = useCart();
+  const { addToCart, openCart } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -29,7 +29,7 @@ const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) =
       // Fechar o modal de visualização rápida
       onClose();
       // Abrir o carrinho automaticamente após adicionar o produto
-      toggleCart();
+      openCart();
     } catch (error) {
       toast({
         title: "Erro",
