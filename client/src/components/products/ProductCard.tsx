@@ -4,13 +4,15 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { DisplayProduct } from "@shared/schema";
 import ProductQuickView from "./ProductQuickView";
+import { useCartUI } from "@/context/CartUIContext";
 
 interface ProductCardProps {
   product: DisplayProduct;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart, openCart } = useCart();
+  const { addToCart } = useCart();
+  const { openCart } = useCartUI();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);

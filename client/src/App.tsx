@@ -1,7 +1,6 @@
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/HomePage";
 import ProductsPage from "@/pages/ProductsPage";
@@ -12,7 +11,7 @@ import CartPage from "@/pages/CartPage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
-import { useCart } from "@/hooks/useCart";
+import { CartUIProvider, useCartUI } from "@/context/CartUIContext";
 
 function Router() {
   return (
@@ -28,30 +27,30 @@ function Router() {
   );
 }
 
-function App() {
-  // Usamos o hook useCart para obter o estado do carrinho do contexto global
-  const { isCartOpen, closeCart, cartItems } = useCart();
-  
-  // Adicionando um useEffect para monitorar o estado do carrinho
-  useEffect(() => {
-    console.log("Estado do carrinho atualizado em App.tsx - isCartOpen:", isCartOpen);
-    console.log("Produtos no carrinho:", cartItems.length);
-  }, [isCartOpen, cartItems]);
+function AppContent() {
+  const { isCartOpen, openCart, closeCart, toggleCart } = useCartUI();
 
   return (
     <TooltipProvider>
-      <Header />
+      <Header openCart={openCart} toggleCart={toggleCart} />
       
       <main className="min-h-screen">
         <Router />
       </main>
       
-      {/* Renderizando o CartDrawer quando isCartOpen for true */}
-      {isCartOpen && <CartDrawer />}
+      <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
       
       <Footer />
       <Toaster />
     </TooltipProvider>
+  );
+}
+
+function App() {
+  return (
+    <CartUIProvider>
+      <AppContent />
+    </CartUIProvider>
   );
 }
 

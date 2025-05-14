@@ -10,13 +10,13 @@ import {
 import { useCart } from "@/hooks/useCart";
 
 interface HeaderProps {
-  // Mantendo a interface para compatibilidade, mas não vamos usar a prop
+  openCart: () => void;
   toggleCart?: () => void;
 }
 
-const Header = ({ toggleCart: propToggleCart }: HeaderProps) => {
+const Header = ({ openCart }: HeaderProps) => {
   const [location] = useLocation();
-  const { cartItems, openCart } = useCart(); // Precisamos apenas da função openCart do contexto
+  const { cartItems } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -76,11 +76,8 @@ const Header = ({ toggleCart: propToggleCart }: HeaderProps) => {
             
             <button 
               onClick={() => {
-                console.log("Cart button clicked - abrindo o carrinho");
-                // Adicionar um pequeno atraso para garantir que o estado seja atualizado
-                setTimeout(() => {
-                  openCart();
-                }, 50);
+                console.log("[Header] Botão do carrinho clicado");
+                openCart();
               }}
               className="p-2 hover:text-accent transition relative"
               aria-label="Shopping cart"
