@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Star, StarHalf } from "lucide-react";
+import { Star, StarHalf, Eye } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { DisplayProduct } from "@shared/schema";
+import ProductQuickView from "./ProductQuickView";
 
 interface ProductCardProps {
   product: DisplayProduct;
@@ -12,6 +13,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const { addToCart, toggleCart } = useCart();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   const handleAddToCart = async () => {
     setIsAdding(true);
@@ -33,6 +35,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
     } finally {
       setIsAdding(false);
     }
+  };
+  
+  const openQuickView = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsQuickViewOpen(true);
   };
 
   // Determine product badges
@@ -59,6 +66,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </span>
           </div>
         )}
+        
+        {/* Quick view button */}
+        <button
+          onClick={openQuickView}
+          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 opacity-0 group-hover:bg-opacity-20 group-hover:opacity-100 transition-all duration-300"
+          aria-label="Visualização rápida"
+        >
+          <div className="bg-white rounded-full p-3 flex items-center justify-center shadow-md hover:bg-gray-100">
+            <Eye className="h-5 w-5 text-primary" />
+          </div>
+        </button>
       </div>
       <div className="p-4">
         <h3 className="font-montserrat font-medium text-lg mb-1">{product.name}</h3>
@@ -80,6 +98,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
           isAdding={isAdding}
         />
       </div>
+      
+      {/* Quick view modal */}
+      <ProductQuickView 
+        product={product} 
+        isOpen={isQuickViewOpen} 
+        onClose={() => setIsQuickViewOpen(false)} 
+      />
     </div>
   );
 };
