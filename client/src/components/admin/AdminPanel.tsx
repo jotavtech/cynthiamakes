@@ -28,11 +28,27 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 
 const AdminPanel = () => {
@@ -291,6 +307,182 @@ const AdminPanel = () => {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   Nenhum produto cadastrado.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="inventory">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <Card className="bg-amber-50 border-amber-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-amber-700">
+                  <AlertTriangle className="h-4 w-4 inline-block mr-2" />
+                  Produtos com Baixo Estoque
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-700">
+                  {lowStockProducts?.filter(p => p.stockStatus === "low_stock").length || 0}
+                </div>
+                <p className="text-xs text-amber-700 mt-1">
+                  Produtos com estoque abaixo do limite
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-red-50 border-red-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-red-700">
+                  <AlertTriangle className="h-4 w-4 inline-block mr-2" />
+                  Produtos Esgotados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-700">
+                  {lowStockProducts?.filter(p => p.stockStatus === "out_of_stock").length || 0}
+                </div>
+                <p className="text-xs text-red-700 mt-1">
+                  Produtos sem estoque disponível
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">
+                  <BarChart3 className="h-4 w-4 inline-block mr-2" />
+                  Total de Produtos
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {products?.length || 0}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Produtos no catálogo
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Gerenciamento de Estoque</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingLowStock ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                </div>
+              ) : lowStockProducts && lowStockProducts.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Produto
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          SKU
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Estoque Atual
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Limite de Estoque
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Ações
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {lowStockProducts.map((product) => (
+                        <tr key={product.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <img
+                                src={product.imageUrl}
+                                alt={product.name}
+                                className="h-10 w-10 rounded-md object-cover mr-3"
+                              />
+                              <div className="text-sm font-medium text-gray-900">
+                                {product.name}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {product.sku || "N/A"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {product.stock}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {product.lowStockThreshold}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {product.stockStatus === "out_of_stock" ? (
+                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                Esgotado
+                              </Badge>
+                            ) : product.stockStatus === "low_stock" ? (
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                                Baixo Estoque
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                Em Estoque
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-green-600 border-green-600 hover:bg-green-50"
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setStockAction("add");
+                                  setIsAdjustStockOpen(true);
+                                }}
+                              >
+                                <PlusCircle className="h-4 w-4 mr-1" /> Adicionar
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                  setSelectedProduct(product);
+                                  setStockAction("remove");
+                                  setIsAdjustStockOpen(true);
+                                }}
+                                disabled={product.stock <= 0}
+                              >
+                                <MinusCircle className="h-4 w-4 mr-1" /> Remover
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Nenhum produto com baixo estoque encontrado.
                 </div>
               )}
             </CardContent>
