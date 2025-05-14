@@ -7,9 +7,12 @@ import {
   InsertCartItem, 
   DisplayProduct, 
   CartItemWithProduct,
+  InventoryTransaction,
+  InsertInventoryTransaction,
   users,
   products,
-  cartItems
+  cartItems,
+  inventoryTransactions
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -193,11 +196,112 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Métodos de inventário
+  async updateProductStock(
+    id: number, 
+    stockChange: number, 
+    userId: number, 
+    transactionType: string, 
+    notes?: string
+  ): Promise<DisplayProduct | undefined> {
+    // Primeiro, obtém o produto atual
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    
+    if (!product) return undefined;
+    
+    // Calcula o novo estoque (não permitindo valores negativos)
+    const newStock = Math.max(0, product.stock + stockChange);
+    
+    // Atualiza o produto com o novo estoque
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ stock: newStock })
+      .where(eq(products.id, id))
+      .returning();
+      
+    if (!updatedProduct) return undefined;
+    
+    // Registra a transação de estoque
+    await this.createInventoryTransaction({
+      type: transactionType,
+      productId: id,
+      quantity: stockChange,
+      createdBy: userId,
+      notes: notes || null
+    });
+    
+    // Retorna o produto atualizado com formato
+    return this.formatProduct(updatedProduct);
+  }
+  
+  async getProductStock(id: number): Promise<number> {
+    const [product] = await db.select({ stock: products.stock }).from(products).where(eq(products.id, id));
+    return product ? product.stock : 0;
+  }
+  
+  async getLowStockProducts(limit: number = 20): Promise<DisplayProduct[]> {
+    // Busca produtos que têm estoque abaixo do limite ou zerado
+    const lowStockProducts = await db
+      .select()
+      .from(products)
+      .where(
+        // Estoque menor ou igual ao limite OU estoque zerado
+        products.stock <= products.lowStockThreshold
+      )
+      .limit(limit);
+    
+    // Formatamos os produtos e adicionamos o status de estoque
+    return lowStockProducts.map(product => {
+      const formattedProduct = this.formatProduct(product);
+      
+      // Adiciona o status de estoque
+      if (product.stock === 0) {
+        formattedProduct.stockStatus = "out_of_stock";
+      } else if (product.stock <= product.lowStockThreshold) {
+        formattedProduct.stockStatus = "low_stock";
+      } else {
+        formattedProduct.stockStatus = "in_stock";
+      }
+      
+      return formattedProduct;
+    });
+  }
+  
+  async getInventoryTransactions(productId?: number, limit: number = 20): Promise<InventoryTransaction[]> {
+    let query = db.select().from(inventoryTransactions).orderBy(desc(inventoryTransactions.createdAt));
+    
+    // Se um productId foi especificado, filtramos por ele
+    if (productId) {
+      query = query.where(eq(inventoryTransactions.productId, productId));
+    }
+    
+    const transactions = await query.limit(limit);
+    return transactions;
+  }
+  
+  async createInventoryTransaction(transaction: InsertInventoryTransaction): Promise<InventoryTransaction> {
+    const [newTransaction] = await db
+      .insert(inventoryTransactions)
+      .values({
+        ...transaction,
+        createdAt: new Date()
+      })
+      .returning();
+      
+    return newTransaction;
+  }
+
   // Métodos auxiliares
   private formatProduct(product: Product): DisplayProduct {
+    const stockStatus = 
+      product.stock === 0 ? "out_of_stock" :
+      product.stock <= product.lowStockThreshold ? "low_stock" : 
+      "in_stock";
+      
     return {
       ...product,
-      formattedPrice: formatPrice(product.price)
+      formattedPrice: formatPrice(product.price),
+      stockStatus
     };
   }
 }
