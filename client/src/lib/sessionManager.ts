@@ -62,5 +62,8 @@ export function clearSessionId(): void {
   }
 }
 
-// Exporta o ID de sessão como constante para uso global
-export const SESSION_ID = getSessionId();
+// Exportamos uma função que sempre retorna o ID de sessão atualizado
+// em vez de exportar uma constante que pode ficar desatualizada
+export function getActiveSessionId() {
+  return getSessionId();
+}

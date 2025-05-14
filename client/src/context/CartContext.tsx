@@ -6,7 +6,7 @@ import {
 } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { SESSION_ID } from "@/lib/sessionManager";
+import { getActiveSessionId } from "@/lib/sessionManager";
 import { CartItemWithProduct } from "@shared/schema";
 
 interface CartContextType {
@@ -49,16 +49,18 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Buscar itens do carrinho na montagem do componente
   useEffect(() => {
-    console.log("Inicializando carrinho com SESSION_ID:", SESSION_ID);
+    const sessionId = getActiveSessionId();
+    console.log("Inicializando carrinho com sessionId:", sessionId);
     fetchCartItems();
   }, []);
 
   const fetchCartItems = async (): Promise<CartItemWithProduct[]> => {
-    console.log("Buscando itens do carrinho para a sessão:", SESSION_ID);
+    const sessionId = getActiveSessionId();
+    console.log("Buscando itens do carrinho para a sessão:", sessionId);
     setIsLoading(true);
     try {
       // Fazer requisição para a API
-      const response = await fetch(`/api/cart/${SESSION_ID}`);
+      const response = await fetch(`/api/cart/${sessionId}`);
       if (!response.ok) {
         console.error("Falha ao buscar carrinho:", response.status, response.statusText);
         throw new Error("Falha ao buscar carrinho");
@@ -82,6 +84,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const addToCart = async (productId: number, quantity = 1) => {
+    const sessionId = getActiveSessionId();
     console.log(`[CartContext] Adicionando produto ${productId} ao carrinho com quantidade ${quantity}`);
     
     try {
@@ -121,7 +124,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           body: JSON.stringify({
             productId,
             quantity,
-            sessionId: SESSION_ID,
+            sessionId,
           }),
         });
         
@@ -210,10 +213,11 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const clearCart = async () => {
-    console.log(`Limpando todos os itens do carrinho para a sessão ${SESSION_ID}`);
+    const sessionId = getActiveSessionId();
+    console.log(`Limpando todos os itens do carrinho para a sessão ${sessionId}`);
     
     try {
-      const response = await fetch(`/api/cart/clear/${SESSION_ID}`, {
+      const response = await fetch(`/api/cart/clear/${sessionId}`, {
         method: "DELETE",
       });
       
