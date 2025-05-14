@@ -101,12 +101,12 @@ function App() {
         {/* Botão flutuante do carrinho */}
         <button
           onClick={openCart}
-          className="fixed bottom-6 right-6 bg-accent text-white p-4 rounded-full shadow-lg hover:bg-opacity-90 transition-all z-40 flex items-center justify-center"
+          className="fixed bottom-6 right-6 bg-accent text-white p-4 rounded-full shadow-xl hover:bg-accent-dark hover:scale-110 transition-all duration-300 z-40 flex items-center justify-center"
           aria-label="Abrir carrinho"
         >
           <ShoppingBag className="h-6 w-6" />
           {cartItems.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-6 h-6 flex items-center justify-center font-bold">
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full text-xs w-6 h-6 flex items-center justify-center font-bold shadow-md animate-pulse">
               {cartItems.reduce((total, item) => total + item.quantity, 0)}
             </span>
           )}

@@ -84,7 +84,10 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   // Efeito para buscar dados quando o drawer é aberto
   useEffect(() => {
     if (isOpen) {
-      refreshCart();
+      console.log("CartDrawer aberto, buscando itens do carrinho...");
+      refreshCart().then(() => {
+        console.log("Itens do carrinho atualizados no drawer");
+      });
     }
   }, [isOpen, refreshCart]);
   
@@ -163,8 +166,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             </div>
           ) : (
             cartItems.map(item => (
-              <div key={item.id} className="flex border-b pb-4">
-                <div className="w-20 h-20 rounded-md overflow-hidden">
+              <div key={item.id} className="flex border-b pb-4 mb-4">
+                <div className="w-20 h-20 rounded-md overflow-hidden border">
                   <img 
                     src={item.product.imageUrl} 
                     alt={item.product.name} 
@@ -172,27 +175,27 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                   />
                 </div>
                 <div className="ml-4 flex-1">
-                  <h4 className="font-medium">{item.product.name}</h4>
-                  <div className="text-gray-500">{item.product.formattedPrice}</div>
-                  <div className="flex items-center mt-2">
+                  <h4 className="font-montserrat font-medium text-primary">{item.product.name}</h4>
+                  <div className="text-accent font-medium mt-1">{item.product.formattedPrice}</div>
+                  <div className="flex items-center mt-3">
                     <button 
                       onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                      className="p-1 border rounded-md"
+                      className="p-1 border rounded-md hover:bg-gray-100 transition"
                       aria-label="Diminuir quantidade"
                     >
                       <Minus className="h-4 w-4" />
                     </button>
-                    <span className="mx-2">{item.quantity}</span>
+                    <span className="mx-3 font-medium">{item.quantity}</span>
                     <button 
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="p-1 border rounded-md"
+                      className="p-1 border rounded-md hover:bg-gray-100 transition"
                       aria-label="Aumentar quantidade"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
                     <button 
                       onClick={() => removeItem(item.id)}
-                      className="ml-auto text-red-500"
+                      className="ml-auto text-red-500 hover:text-red-700 transition"
                       aria-label="Remover item"
                     >
                       <Trash2 className="h-5 w-5" />
