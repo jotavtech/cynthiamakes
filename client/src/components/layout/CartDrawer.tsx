@@ -25,7 +25,7 @@ const CartDrawer = () => {
     if (isEmpty) return;
     
     const message = formatWhatsAppMessage(cartItems);
-    const phoneNumber = "99318-7473"; // The phone number from the requirements
+    const phoneNumber = "83993187473"; // O número do WhatsApp completo com DDD
     
     // Abre o WhatsApp com a mensagem formatada
     window.open(`https://api.whatsapp.com/send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`, '_blank');

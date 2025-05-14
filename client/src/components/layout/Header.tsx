@@ -4,7 +4,8 @@ import {
   Search, 
   ShoppingBag, 
   Menu, 
-  X 
+  X,
+  Settings
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 
@@ -81,6 +82,14 @@ const Header = () => {
                 </span>
               )}
             </button>
+            
+            <Link 
+              href="/admin" 
+              className="p-2 hover:text-accent transition hidden md:block"
+              aria-label="Admin area"
+            >
+              <Settings className="h-6 w-6" />
+            </Link>
             
             <button 
               onClick={toggleMobileMenu}
