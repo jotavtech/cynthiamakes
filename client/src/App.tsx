@@ -33,7 +33,7 @@ function App() {
 
   return (
     <TooltipProvider>
-      <Header toggleCart={toggleCart} />
+      <Header />
       
       <main className="min-h-screen">
         <Router />

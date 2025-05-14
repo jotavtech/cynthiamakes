@@ -10,12 +10,13 @@ import {
 import { useCart } from "@/hooks/useCart";
 
 interface HeaderProps {
-  toggleCart: () => void;
+  // Mantendo a interface para compatibilidade, mas não vamos usar a prop
+  toggleCart?: () => void;
 }
 
-const Header = ({ toggleCart }: HeaderProps) => {
+const Header = ({ toggleCart: propToggleCart }: HeaderProps) => {
   const [location] = useLocation();
-  const { cartItems } = useCart();
+  const { cartItems, toggleCart } = useCart(); // Pegando toggleCart do contexto
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -75,8 +76,8 @@ const Header = ({ toggleCart }: HeaderProps) => {
             
             <button 
               onClick={() => {
-                console.log("Cart button clicked");
-                toggleCart();
+                console.log("Cart button clicked - usando toggleCart do contexto");
+                toggleCart(); // Agora usando o toggleCart do contexto, não da prop
               }}
               className="p-2 hover:text-accent transition relative"
               aria-label="Shopping cart"

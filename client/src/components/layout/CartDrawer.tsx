@@ -3,7 +3,7 @@ import { useCart } from "@/hooks/useCart";
 import { formatWhatsAppMessage } from "@/lib/utils";
 
 interface CartDrawerProps {
-  onClose: () => void;
+  onClose?: () => void; // Tornando opcional para compatibilidade
 }
 
 const CartDrawer = ({ onClose }: CartDrawerProps) => {
@@ -11,8 +11,20 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
     cartItems, 
     updateCartItemQuantity, 
     removeFromCart,
-    clearCart 
+    clearCart,
+    toggleCart // Adicionando toggleCart do contexto
   } = useCart();
+  
+  // Função para fechar o carrinho, usando toggleCart do contexto como principal
+  const closeCart = () => {
+    // Sempre usamos o toggleCart do contexto que é garantido como não-undefined
+    toggleCart();
+    
+    // Se também houver um callback onClose, chamamos ele também por compatibilidade
+    if (onClose) {
+      onClose();
+    }
+  };
 
   const isEmpty = cartItems.length === 0;
   
@@ -35,7 +47,7 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
     
     // Limpa o carrinho e fecha o drawer após enviar
     clearCart();
-    onClose();
+    closeCart();
   };
 
   return (
@@ -43,7 +55,7 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black bg-opacity-50" 
-        onClick={onClose}
+        onClick={closeCart}
       />
       
       {/* Drawer */}
@@ -52,7 +64,7 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-xl font-montserrat font-semibold">Carrinho de Compras</h2>
           <button 
-            onClick={onClose}
+            onClick={closeCart}
             className="p-2 hover:text-accent transition"
             aria-label="Close cart"
           >
@@ -125,7 +137,7 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
             Finalizar Compra via WhatsApp
           </button>
           <button 
-            onClick={onClose}
+            onClick={closeCart}
             className="w-full bg-gray-200 text-gray-800 font-medium py-3 rounded-md hover:bg-gray-300 transition"
           >
             Continuar Comprando
