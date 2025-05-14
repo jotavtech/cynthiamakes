@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 0 0% 0%;  /* Black */
+  --primary-foreground: 0 0% 100%;  /* White */
+  --secondary: 349 100% 90.4%;  /* Light Pink (FFD1DC) */
+  --secondary-foreground: 24 9.8% 10%;
+  --accent: 347 100% 60.8%;  /* Pink (FF385C) */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 20 14.3% 4.1%;
+  --radius: 0.5rem;
+
+  /* Chart colors */
+  --chart-1: 211 70% 50%;
+  --chart-2: 139 70% 43%;
+  --chart-3: 339 90% 52%;
+  --chart-4: 40 96% 64%;
+  --chart-5: 210 100% 35%;
+}
+
+.dark {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --primary: 0 0% 0%;  /* Black */
+  --primary-foreground: 0 0% 100%;  /* White */
+  --secondary: 349 100% 90.4%;  /* Light Pink (FFD1DC) */
+  --secondary-foreground: 0 0% 98%;
+  --accent: 347 100% 60.8%;  /* Pink (FF385C) */
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 240 4.9% 83.9%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;600&display=swap');
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-opensans {
+  font-family: 'Open Sans', sans-serif;
+}
+
+/* Custom components */
+@layer components {
+  .container-custom {
+    @apply container mx-auto px-4;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white font-medium py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-white font-medium py-2 px-4 rounded-md hover:bg-opacity-90 transition duration-200;
+  }
+  
+  .btn-outline {
+    @apply bg-transparent border border-primary text-primary font-medium py-2 px-4 rounded-md hover:bg-primary hover:text-white transition duration-200;
+  }
+  
+  .heading-xl {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold font-montserrat;
+  }
+  
+  .heading-lg {
+    @apply text-3xl font-bold font-montserrat;
+  }
+  
+  .heading-md {
+    @apply text-2xl font-semibold font-montserrat;
+  }
+  
+  .heading-sm {
+    @apply text-xl font-semibold font-montserrat;
+  }
+}
