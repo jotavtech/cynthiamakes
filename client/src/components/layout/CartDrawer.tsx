@@ -3,6 +3,7 @@ import { useCart } from "@/hooks/useCart";
 import { formatWhatsAppMessage, generateWhatsAppURL } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { CartItemWithProduct } from "@shared/schema";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -25,6 +26,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   
   const [isVisible, setIsVisible] = useState(false);
   
+  // Estado local para armazenar os itens do carrinho
+  const [localCartItems, setLocalCartItems] = useState<CartItemWithProduct[]>([]);
+
   // Efeito para controlar a animação e buscar dados atualizados
   useEffect(() => {
     if (isOpen) {
@@ -32,9 +36,15 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       
       // Quando o carrinho é aberto, forçamos uma atualização dos itens
       console.log("[CartDrawer] Carrinho aberto! Buscando itens atualizados...");
-      fetchCartItems().then(items => {
-        console.log("[CartDrawer] Itens do carrinho atualizados:", items);
-      });
+      (async () => {
+        try {
+          const items = await fetchCartItems();
+          console.log("[CartDrawer] Itens do carrinho atualizados:", items);
+          setLocalCartItems(items); // Atualiza o estado local com os itens mais recentes
+        } catch (error) {
+          console.error("[CartDrawer] Erro ao buscar itens do carrinho:", error);
+        }
+      })();
     } else {
       // Quando fechamos, aguardamos a animação terminar antes de esconder
       const timer = setTimeout(() => {
@@ -47,12 +57,14 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   // Se não estiver visível, não renderizar
   if (!isVisible) return null;
 
-  // Verificamos o estado a cada renderização para ter certeza de que estamos exibindo dados atualizados
-  const isEmpty = cartItems.length === 0;
-  console.log("[CartDrawer] Renderizando com", cartItems.length, "itens no carrinho");
+  // Usar os itens locais para garantir que estamos exibindo os dados mais atualizados
+  // Caso o estado local esteja vazio, tentamos usar os itens do contexto (isso pode acontecer na montagem inicial)
+  const displayItems = localCartItems.length > 0 ? localCartItems : cartItems;
+  const isEmpty = displayItems.length === 0;
+  console.log("[CartDrawer] Renderizando com", displayItems.length, "itens no carrinho");
   
   // Calcular preço total
-  const totalPrice = cartItems.reduce((total, item) => {
+  const totalPrice = displayItems.reduce((total, item) => {
     return total + (item.product.price * item.quantity);
   }, 0);
   
@@ -64,7 +76,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     
     try {
       // Criando a mensagem formatada para o WhatsApp
-      const message = formatWhatsAppMessage(cartItems);
+      const message = formatWhatsAppMessage(displayItems);
       
       // Logging para debug
       console.log("Enviando pedido para WhatsApp:", message);
@@ -128,7 +140,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <p className="mt-2 text-sm">Adicione produtos para continuar comprando</p>
             </div>
           ) : (
-            cartItems.map((item) => (
+            displayItems.map((item) => (
               <div key={item.id} className="flex border-b pb-4">
                 <div className="w-20 h-20 rounded-md overflow-hidden">
                   <img 
