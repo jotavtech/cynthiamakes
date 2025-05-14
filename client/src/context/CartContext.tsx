@@ -53,7 +53,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     fetchCartItems();
   }, []);
 
-  const fetchCartItems = async () => {
+  const fetchCartItems = async (): Promise<CartItemWithProduct[]> => {
     console.log("Buscando itens do carrinho para a sessão:", SESSION_ID);
     setIsLoading(true);
     try {
@@ -67,6 +67,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       const data = await response.json();
       console.log("Itens do carrinho obtidos:", data);
       setCartItems(data);
+      return data;
     } catch (error) {
       console.error("Erro ao buscar itens do carrinho:", error);
       toast({
@@ -74,6 +75,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         description: "Não foi possível carregar os itens do carrinho.",
         variant: "destructive",
       });
+      return [];
     } finally {
       setIsLoading(false);
     }

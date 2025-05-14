@@ -32,12 +32,14 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, fetchCartItems]);
+  }, [isOpen]);
   
   // Se não estiver visível, não renderizar
   if (!isVisible) return null;
 
+  // Verificamos o estado a cada renderização para ter certeza de que estamos exibindo dados atualizados
   const isEmpty = cartItems.length === 0;
+  console.log("[CartDrawer] Renderizando com", cartItems.length, "itens no carrinho");
   
   // Calcular preço total
   const totalPrice = cartItems.reduce((total, item) => {
