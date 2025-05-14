@@ -14,7 +14,8 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     cartItems, 
     updateCartItemQuantity, 
     removeFromCart,
-    clearCart
+    clearCart,
+    fetchCartItems
   } = useCart();
   
   const { toast } = useToast();
@@ -24,13 +25,16 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   
   const [isVisible, setIsVisible] = useState(false);
   
-  // Efeito para controlar a animação
+  // Efeito para controlar a animação e buscar dados atualizados
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
       
       // Quando o carrinho é aberto, forçamos uma atualização dos itens
-      console.log("[CartDrawer] Carrinho aberto!");
+      console.log("[CartDrawer] Carrinho aberto! Buscando itens atualizados...");
+      fetchCartItems().then(items => {
+        console.log("[CartDrawer] Itens do carrinho atualizados:", items);
+      });
     } else {
       // Quando fechamos, aguardamos a animação terminar antes de esconder
       const timer = setTimeout(() => {
@@ -38,7 +42,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, fetchCartItems]);
   
   // Se não estiver visível, não renderizar
   if (!isVisible) return null;

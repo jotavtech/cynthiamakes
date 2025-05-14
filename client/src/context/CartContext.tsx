@@ -136,7 +136,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       
       // Buscar itens atualizados do carrinho
       console.log("[CartContext] Buscando itens atualizados do carrinho");
-      await fetchCartItems();
+      const updatedItems = await fetchCartItems();
+      console.log("[CartContext] Total de itens no carrinho após adição:", updatedItems.length);
       
       // Não abrimos o carrinho aqui, deixamos essa responsabilidade para o hook useCart
       // para evitar conflitos entre estados
@@ -242,7 +243,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     // Se o carrinho foi aberto, atualizar os itens
     if (isCartOpen) {
       console.log("[CartContext] Carrinho aberto, buscando itens atualizados");
-      fetchCartItems();
+      fetchCartItems().then(items => {
+        console.log("[CartContext] Itens recuperados após abertura:", items.length);
+      });
     }
   }, [isCartOpen]);
 
