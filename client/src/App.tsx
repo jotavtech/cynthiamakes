@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,7 +12,6 @@ import CartPage from "@/pages/CartPage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
-import { useCart } from "@/hooks/useCart";
 
 function Router() {
   return (
@@ -28,19 +28,22 @@ function Router() {
 }
 
 function App() {
-  const { isCartOpen } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
-  console.log("App render - isCartOpen:", isCartOpen);
+  const toggleCart = () => {
+    console.log("Toggling cart in App.tsx from", isCartOpen, "to", !isCartOpen);
+    setIsCartOpen(!isCartOpen);
+  };
 
   return (
     <TooltipProvider>
-      <Header />
+      <Header toggleCart={toggleCart} />
       
       <main className="min-h-screen">
         <Router />
       </main>
       
-      {isCartOpen && <CartDrawer />}
+      {isCartOpen && <CartDrawer onClose={() => setIsCartOpen(false)} />}
       
       <Footer />
       <Toaster />

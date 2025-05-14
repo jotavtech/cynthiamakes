@@ -9,9 +9,13 @@ import {
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 
-const Header = () => {
+interface HeaderProps {
+  toggleCart: () => void;
+}
+
+const Header = ({ toggleCart }: HeaderProps) => {
   const [location] = useLocation();
-  const { cartItems, toggleCart } = useCart();
+  const { cartItems } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 

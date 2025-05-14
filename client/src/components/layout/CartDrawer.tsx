@@ -2,10 +2,13 @@ import { X, Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { formatWhatsAppMessage } from "@/lib/utils";
 
-const CartDrawer = () => {
+interface CartDrawerProps {
+  onClose: () => void;
+}
+
+const CartDrawer = ({ onClose }: CartDrawerProps) => {
   const { 
     cartItems, 
-    toggleCart, 
     updateCartItemQuantity, 
     removeFromCart,
     clearCart 
@@ -32,7 +35,7 @@ const CartDrawer = () => {
     
     // Limpa o carrinho e fecha o drawer após enviar
     clearCart();
-    toggleCart();
+    onClose();
   };
 
   return (
@@ -40,7 +43,7 @@ const CartDrawer = () => {
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black bg-opacity-50" 
-        onClick={toggleCart}
+        onClick={onClose}
       />
       
       {/* Drawer */}
@@ -49,7 +52,7 @@ const CartDrawer = () => {
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-xl font-montserrat font-semibold">Carrinho de Compras</h2>
           <button 
-            onClick={toggleCart}
+            onClick={onClose}
             className="p-2 hover:text-accent transition"
             aria-label="Close cart"
           >
@@ -122,7 +125,7 @@ const CartDrawer = () => {
             Finalizar Compra via WhatsApp
           </button>
           <button 
-            onClick={toggleCart}
+            onClick={onClose}
             className="w-full bg-gray-200 text-gray-800 font-medium py-3 rounded-md hover:bg-gray-300 transition"
           >
             Continuar Comprando
