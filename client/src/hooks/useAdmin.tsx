@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 
-export const useAdmin = () => {
+export function useAdmin() {
   const { toast } = useToast();
   
   // Verifica se existe um usuário no localStorage (para compatibilidade com AdminContext)
@@ -62,6 +62,10 @@ export const useAdmin = () => {
     },
     onSuccess: () => {
       queryClient.setQueryData(['/api/user'], null);
+      
+      // Remover dados do AdminContext
+      localStorage.removeItem('adminUser');
+      
       toast({
         title: "Logout realizado com sucesso",
       });
