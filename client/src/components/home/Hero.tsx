@@ -22,10 +22,8 @@ const Hero = () => {
           <p className="text-lg md:text-xl text-white mb-8">
             Produtos de alta qualidade para realçar sua beleza natural
           </p>
-          <Link href="/produtos">
-            <a className="inline-block bg-primary text-white font-medium py-3 px-8 rounded-md hover:bg-opacity-90 transition">
-              Ver Produtos
-            </a>
+          <Link href="/produtos" className="inline-block bg-primary text-white font-medium py-3 px-8 rounded-md hover:bg-opacity-90 transition">
+            Ver Produtos
           </Link>
         </div>
       </div>
