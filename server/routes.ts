@@ -1,10 +1,22 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema } from "@shared/schema";
 import { z } from "zod";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configura autenticação
+  setupAuth(app);
+  
+  // Middleware para verificar se o usuário é admin
+  const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).json({ message: "Acesso não autorizado" });
+    }
+    next();
+  };
+  
   // API routes
   
   // Product routes
@@ -59,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req: Request, res: Response) => {
+  app.post("/api/products", isAdmin, async (req: Request, res: Response) => {
     try {
       const productData = insertProductSchema.parse(req.body);
       const newProduct = await storage.createProduct(productData);
@@ -76,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/products/:id", async (req: Request, res: Response) => {
+  app.put("/api/products/:id", isAdmin, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -103,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", async (req: Request, res: Response) => {
+  app.delete("/api/products/:id", isAdmin, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
