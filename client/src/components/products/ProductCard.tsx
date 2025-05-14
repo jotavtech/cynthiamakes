@@ -17,13 +17,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
+  // Obter a função addToCartAndOpen do hook useCart
+  const { addToCartAndOpen } = useCart();
+  
   const handleAddToCart = async () => {
     setIsAdding(true);
     console.log(`[ProductCard] Tentando adicionar produto ${product.id} (${product.name}) ao carrinho`);
     
     try {
-      // Usa a função melhorada que adiciona ao carrinho e abre o drawer
-      const { addToCartAndOpen } = useCart();
+      // Usar a função importada no início
       const success = await addToCartAndOpen(product.id);
       
       if (success) {
@@ -153,6 +155,7 @@ interface AddToCartButtonProps {
 }
 
 const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButtonProps) => {
+  // Obter a função addToCartAndOpen do contexto aqui para evitar problemas
   const { addToCartAndOpen } = useCart();
   const { toast } = useToast();
   const [isAddingInternal, setIsAddingInternal] = useState(false);
@@ -170,6 +173,7 @@ const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButt
     setIsAddingInternal(true);
     
     try {
+      // Usar a função que foi obtida no escopo do componente
       const success = await addToCartAndOpen(productId);
       
       if (success) {

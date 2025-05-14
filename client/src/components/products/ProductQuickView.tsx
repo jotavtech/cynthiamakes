@@ -12,8 +12,8 @@ interface ProductQuickViewProps {
 }
 
 const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) => {
-  const { addToCart } = useCart();
-  const { openCart } = useCartUI();
+  // Use todas as funções fora do handleAddToCart para evitar erros
+  const { addToCartAndOpen } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -23,8 +23,7 @@ const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) =
   const handleAddToCart = async () => {
     setIsAdding(true);
     try {
-      // Usar a função unificada que adiciona o produto e abre o carrinho
-      const { addToCartAndOpen } = useCart();
+      // Usar a função importada no início
       const success = await addToCartAndOpen(product.id, quantity);
       
       if (success) {
