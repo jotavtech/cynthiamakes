@@ -16,7 +16,7 @@ interface HeaderProps {
 
 const Header = ({ toggleCart: propToggleCart }: HeaderProps) => {
   const [location] = useLocation();
-  const { cartItems, toggleCart, openCart } = useCart(); // Pegando toggleCart do contexto
+  const { cartItems, openCart } = useCart(); // Precisamos apenas da função openCart do contexto
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -76,8 +76,11 @@ const Header = ({ toggleCart: propToggleCart }: HeaderProps) => {
             
             <button 
               onClick={() => {
-                console.log("Cart button clicked - abrindo o carrinho explicitamente");
-                openCart(); // Usando openCart explicitamente em vez de toggleCart
+                console.log("Cart button clicked - abrindo o carrinho");
+                // Adicionar um pequeno atraso para garantir que o estado seja atualizado
+                setTimeout(() => {
+                  openCart();
+                }, 50);
               }}
               className="p-2 hover:text-accent transition relative"
               aria-label="Shopping cart"

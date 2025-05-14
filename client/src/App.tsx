@@ -1,6 +1,7 @@
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/HomePage";
 import ProductsPage from "@/pages/ProductsPage";
@@ -29,7 +30,13 @@ function Router() {
 
 function App() {
   // Usamos o hook useCart para obter o estado do carrinho do contexto global
-  const { isCartOpen, closeCart } = useCart();
+  const { isCartOpen, closeCart, cartItems } = useCart();
+  
+  // Adicionando um useEffect para monitorar o estado do carrinho
+  useEffect(() => {
+    console.log("Estado do carrinho atualizado em App.tsx - isCartOpen:", isCartOpen);
+    console.log("Produtos no carrinho:", cartItems.length);
+  }, [isCartOpen, cartItems]);
 
   return (
     <TooltipProvider>
@@ -39,6 +46,7 @@ function App() {
         <Router />
       </main>
       
+      {/* Renderizando o CartDrawer quando isCartOpen for true */}
       {isCartOpen && <CartDrawer />}
       
       <Footer />

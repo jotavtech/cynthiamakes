@@ -18,11 +18,12 @@ interface CartContextType {
   removeFromCart: (cartItemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
   toggleCart: () => void;
-  openCart: () => void;   // Função explícita para abrir o carrinho
-  closeCart: () => void;  // Função explícita para fechar o carrinho
+  openCart: () => void;
+  closeCart: () => void;
 }
 
-export const CartContext = createContext<CartContextType>({
+// Criando um contexto padrão
+const defaultContext: CartContextType = {
   cartItems: [],
   isCartOpen: false,
   isLoading: false,
@@ -33,19 +34,20 @@ export const CartContext = createContext<CartContextType>({
   toggleCart: () => {},
   openCart: () => {},
   closeCart: () => {},
-});
+};
+
+export const CartContext = createContext<CartContextType>(defaultContext);
 
 interface CartProviderProps {
   children: ReactNode;
 }
 
 export const CartProvider = ({ children }: CartProviderProps) => {
+  // Estado do carrinho
   const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-
-  // SESSION_ID é uma constante importada de sessionManager que já contém o ID da sessão
 
   // Buscar itens do carrinho na montagem do componente
   useEffect(() => {
@@ -234,19 +236,21 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
   };
 
+  // Função para alternar a visibilidade do carrinho
   const toggleCart = () => {
-    console.log("Toggling cart from", isCartOpen, "to", !isCartOpen);
+    console.log("Alternando carrinho de", isCartOpen, "para", !isCartOpen);
     setIsCartOpen(prevState => !prevState);
   };
   
-  // Funções específicas para abrir e fechar o carrinho
+  // Função explícita para abrir o carrinho
   const openCart = () => {
-    console.log("Opening cart explicitly");
+    console.log("Abrindo carrinho explicitamente");
     setIsCartOpen(true);
   };
   
+  // Função explícita para fechar o carrinho
   const closeCart = () => {
-    console.log("Closing cart explicitly");
+    console.log("Fechando carrinho explicitamente");
     setIsCartOpen(false);
   };
 

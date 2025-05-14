@@ -28,8 +28,12 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
   const handleCheckout = () => {
     if (isEmpty) return;
     
+    // Criando a mensagem formatada para o WhatsApp
     const message = formatWhatsAppMessage(cartItems);
     const phoneNumber = "83993187473"; // O número do WhatsApp completo com DDD
+    
+    // Logging para debug
+    console.log("Enviando pedido para WhatsApp:", message);
     
     // Abre o WhatsApp com a mensagem formatada
     window.open(`https://api.whatsapp.com/send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`, '_blank');
@@ -37,6 +41,8 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
     // Limpa o carrinho e fecha o drawer após enviar
     clearCart();
     closeCart();
+    
+    console.log("Carrinho limpo e fechado após envio do pedido");
   };
 
   return (
