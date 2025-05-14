@@ -59,7 +59,13 @@ export function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
+        
+        // Verificar se a senha tem hash (contém '.')
+        const isHashedPassword = user?.password?.includes('.');
+        
+        // Se for senha hash, use comparePasswords, caso contrário compare diretamente
+        if (!user || (isHashedPassword && !(await comparePasswords(password, user.password))) || 
+            (!isHashedPassword && password !== user.password)) {
           return done(null, false);
         } else {
           return done(null, user);

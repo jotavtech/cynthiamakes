@@ -218,29 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Autenticação simples para facilitar acesso ao demo
-  app.post("/api/login", async (req: Request, res: Response) => {
-    try {
-      const { username, password } = req.body;
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password required" });
-      }
-      
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      // Send user info (excluding password) 
-      const { password: _, ...userInfo } = user;
-      res.json(userInfo);
-    } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Login failed" });
-    }
-  });
+  // Autenticação via Passport (configurada em auth.ts)
 
   // Create HTTP server
   const httpServer = createServer(app);
