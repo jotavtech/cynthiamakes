@@ -53,7 +53,7 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Search, Cart, Menu Icons */}
+          {/* Search, Menu Icons */}
           <div className="flex items-center space-x-4">
             <button 
               onClick={toggleSearch}
@@ -61,22 +61,6 @@ const Header = () => {
               aria-label="Search"
             >
               <Search className="h-6 w-6" />
-            </button>
-            
-            <button 
-              onClick={() => {
-                console.log("[Header] Botão do carrinho clicado");
-                openCart();
-              }}
-              className="p-2 hover:text-accent transition relative"
-              aria-label="Shopping cart"
-            >
-              <ShoppingBag className="h-6 w-6" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-accent text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
             </button>
             
             <Link 
