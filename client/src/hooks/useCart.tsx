@@ -44,12 +44,21 @@ export const useCart = () => {
     context.setIsCartOpen(!context.isCartOpen);
   };
   
+  // Encapsular a função fetchCartItems do contexto para garantir uma interface consistente
+  const fetchCartItems = async () => {
+    if (context.fetchCartItems) {
+      return await context.fetchCartItems();
+    }
+    return [];
+  };
+
   // Retornar o contexto enriquecido com as funções auxiliares
   return {
     ...context,
     openCart,
     closeCart,
     toggleCart,
-    addToCartAndOpen
+    addToCartAndOpen,
+    fetchCartItems
   };
 };

@@ -18,6 +18,7 @@ interface CartContextType {
   updateCartItemQuantity: (cartItemId: number, quantity: number) => Promise<void>;
   removeFromCart: (cartItemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
+  fetchCartItems: () => Promise<CartItemWithProduct[]>;
 }
 
 // Definindo valores padrão do contexto
@@ -30,6 +31,7 @@ const defaultContext: CartContextType = {
   updateCartItemQuantity: async () => {},
   removeFromCart: async () => {},
   clearCart: async () => {},
+  fetchCartItems: async () => [],
 };
 
 export const CartContext = createContext<CartContextType>(defaultContext);
@@ -231,9 +233,15 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
   };
 
-  // Logging de mudanças de estado
+  // Logging de mudanças de estado e busca de itens quando o carrinho é aberto
   useEffect(() => {
     console.log("Estado do carrinho foi alterado para:", isCartOpen ? "aberto" : "fechado");
+    
+    // Se o carrinho foi aberto, atualizar os itens
+    if (isCartOpen) {
+      console.log("[CartContext] Carrinho aberto, buscando itens atualizados");
+      fetchCartItems();
+    }
   }, [isCartOpen]);
 
   return (
@@ -247,6 +255,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         updateCartItemQuantity,
         removeFromCart,
         clearCart,
+        fetchCartItems, // Adicionando a função fetchCartItems ao contexto
       }}
     >
       {children}
