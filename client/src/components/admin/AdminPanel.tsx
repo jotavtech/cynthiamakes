@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 const AdminPanel = () => {
   const { logout } = useAdmin();
@@ -28,13 +29,8 @@ const AdminPanel = () => {
 
   const handleAddProduct = async (data: any) => {
     try {
-      await fetch("/api/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      // Usando apiRequest para enviar credenciais corretamente
+      await apiRequest("POST", "/api/products", data);
       
       setIsAddProductOpen(false);
       refetch();
@@ -55,13 +51,7 @@ const AdminPanel = () => {
     if (!selectedProduct) return;
     
     try {
-      await fetch(`/api/products/${selectedProduct.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      await apiRequest("PUT", `/api/products/${selectedProduct.id}`, data);
       
       setIsEditProductOpen(false);
       refetch();
@@ -82,9 +72,7 @@ const AdminPanel = () => {
     if (!selectedProduct) return;
     
     try {
-      await fetch(`/api/products/${selectedProduct.id}`, {
-        method: "DELETE",
-      });
+      await apiRequest("DELETE", `/api/products/${selectedProduct.id}`);
       
       setIsDeleteConfirmOpen(false);
       refetch();
