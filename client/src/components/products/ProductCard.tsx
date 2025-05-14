@@ -23,6 +23,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
         title: "Produto adicionado",
         description: `${product.name} foi adicionado ao carrinho.`,
       });
+      
+      // Redireciona para a página do carrinho
+      window.location.href = '/carrinho';
     } catch (error) {
       toast({
         title: "Erro",
@@ -115,7 +118,7 @@ interface AddToCartButtonProps {
 }
 
 const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButtonProps) => {
-  const { addToCart, toggleCart } = useCart();
+  const { addToCart } = useCart();
   const { toast } = useToast();
   const [isAddingInternal, setIsAddingInternal] = useState(false);
   
@@ -134,8 +137,8 @@ const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButt
         title: "Produto adicionado",
         description: "O produto foi adicionado ao carrinho.",
       });
-      // Abre o carrinho após adicionar o produto
-      toggleCart();
+      // Redireciona para a página do carrinho
+      window.location.href = '/carrinho';
     } catch (error) {
       toast({
         title: "Erro",
