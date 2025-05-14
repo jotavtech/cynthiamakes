@@ -1,4 +1,4 @@
-import { X, Minus, Plus, Trash2, ShoppingBag, Send } from "lucide-react";
+import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { formatWhatsAppMessage, generateWhatsAppURL } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -11,136 +11,172 @@ interface CartDrawerProps {
 }
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
-  const { 
-    cartItems, 
-    updateCartItemQuantity, 
-    removeFromCart,
-    clearCart,
-    fetchCartItems
-  } = useCart();
+  // Usar estado local para os itens
+  const [items, setItems] = useState<CartItemWithProduct[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const { toast } = useToast();
+  // ID fixo da sessão para testes
+  const sessionId = '99i47ng8zigy94xt079q59';
   
-  // Número de telefone da Cynthia Makeup (conforme solicitado)
-  const PHONE_NUMBER = "83993187473";
-  
-  const [isVisible, setIsVisible] = useState(false);
-  
-  // Estado local para armazenar os itens do carrinho
-  const [localCartItems, setLocalCartItems] = useState<CartItemWithProduct[]>([]);
-
-  // Efeito para controlar a animação e buscar dados atualizados
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-      
-      // Quando o carrinho é aberto, forçamos uma atualização dos itens
-      console.log("[CartDrawer] Carrinho aberto! Buscando itens atualizados...");
-      (async () => {
-        try {
-          const items = await fetchCartItems();
-          console.log("[CartDrawer] Itens do carrinho atualizados:", items);
-          setLocalCartItems(items); // Atualiza o estado local com os itens mais recentes
-        } catch (error) {
-          console.error("[CartDrawer] Erro ao buscar itens do carrinho:", error);
-        }
-      })();
-    } else {
-      // Quando fechamos, aguardamos a animação terminar antes de esconder
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, fetchCartItems]);
-  
-  // Se não estiver visível, não renderizar
-  if (!isVisible) return null;
-
-  // Usar os itens locais para garantir que estamos exibindo os dados mais atualizados
-  // Caso o estado local esteja vazio, tentamos usar os itens do contexto (isso pode acontecer na montagem inicial)
-  const displayItems = localCartItems.length > 0 ? localCartItems : cartItems;
-  const isEmpty = displayItems.length === 0;
-  console.log("[CartDrawer] Renderizando com", displayItems.length, "itens no carrinho");
-  
-  // Calcular preço total
-  const totalPrice = displayItems.reduce((total, item) => {
-    return total + (item.product.price * item.quantity);
-  }, 0);
-  
-  const formattedTotal = `R$ ${(totalPrice / 100).toFixed(2).replace('.', ',')}`;
-
-  // Manipular checkout (integração com WhatsApp)
-  const handleCheckout = () => {
-    if (isEmpty) return;
-    
+  // Funções CRUD do carrinho
+  const updateQuantity = async (itemId: number, quantity: number) => {
     try {
-      // Criando a mensagem formatada para o WhatsApp
-      const message = formatWhatsAppMessage(displayItems);
-      
-      // Logging para debug
-      console.log("Enviando pedido para WhatsApp:", message);
-      
-      // Gerar URL do WhatsApp com a mensagem e abrir em nova aba
-      const whatsappUrl = generateWhatsAppURL(PHONE_NUMBER, message);
-      window.open(whatsappUrl, '_blank');
-      
-      toast({
-        title: "Pedido enviado!",
-        description: "Seu pedido foi enviado para o WhatsApp da Cynthia Makeup.",
+      const response = await fetch(`/api/cart/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity })
       });
       
-      // Limpa o carrinho e fecha o drawer após enviar
-      clearCart();
-      onClose();
+      if (!response.ok) throw new Error('Falha ao atualizar quantidade');
       
-      console.log("Carrinho limpo e fechado após envio do pedido");
-    } catch (error) {
-      console.error("Erro ao enviar para o WhatsApp:", error);
-      toast({
-        title: "Erro ao enviar pedido",
-        description: "Não foi possível enviar seu pedido. Tente novamente.",
-        variant: "destructive"
-      });
+      // Atualizar o item localmente para feedback imediato
+      setItems(prev => prev.map(item => 
+        item.id === itemId ? { ...item, quantity } : item
+      ));
+    } catch (err) {
+      console.error('Erro ao atualizar quantidade:', err);
+      setError('Não foi possível atualizar o item.');
     }
   };
-
+  
+  const removeItem = async (itemId: number) => {
+    try {
+      const response = await fetch(`/api/cart/${itemId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Falha ao remover item');
+      
+      // Remover o item localmente para feedback imediato
+      setItems(prev => prev.filter(item => item.id !== itemId));
+    } catch (err) {
+      console.error('Erro ao remover item:', err);
+      setError('Não foi possível remover o item.');
+    }
+  };
+  
+  const clearCart = async () => {
+    try {
+      const response = await fetch(`/api/cart/clear/${sessionId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error('Falha ao limpar carrinho');
+      
+      // Limpar itens localmente
+      setItems([]);
+    } catch (err) {
+      console.error('Erro ao limpar carrinho:', err);
+      setError('Não foi possível limpar o carrinho.');
+    }
+  };
+  
+  // Efeito para carregar itens quando o drawer é aberto
+  useEffect(() => {
+    if (isOpen) {
+      // Função para carregar os itens do carrinho
+      const fetchItems = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          console.log('Buscando itens do carrinho...');
+          const response = await fetch(`/api/cart/${sessionId}`);
+          
+          if (!response.ok) {
+            throw new Error(`Erro ao buscar carrinho: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log('Itens recebidos:', data);
+          setItems(data);
+        } catch (err) {
+          console.error('Erro ao buscar itens do carrinho:', err);
+          setError('Não foi possível carregar os itens do carrinho.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchItems();
+    }
+  }, [isOpen]);
+  
+  // Calcular total do carrinho
+  const total = items.reduce((sum, item) => 
+    sum + (item.product.price * item.quantity), 0);
+  
+  const formattedTotal = `R$ ${(total / 100).toFixed(2).replace('.', ',')}`;
+  
+  // Manipular checkout (integração com WhatsApp)
+  const handleCheckout = () => {
+    if (items.length === 0) return;
+    
+    try {
+      // Número de telefone da Cynthia Makeup (conforme solicitado)
+      const PHONE_NUMBER = "83993187473";
+      
+      // Criar mensagem para WhatsApp
+      const message = formatWhatsAppMessage(items);
+      
+      // Gerar URL do WhatsApp
+      const whatsappUrl = generateWhatsAppURL(PHONE_NUMBER, message);
+      
+      // Abrir WhatsApp
+      window.open(whatsappUrl, '_blank');
+      
+      // Limpar carrinho após checkout
+      clearCart();
+      onClose();
+    } catch (err) {
+      console.error('Erro ao enviar para WhatsApp:', err);
+      setError('Não foi possível finalizar a compra.');
+    }
+  };
+  
+  // Determinar classe CSS para animação do drawer
+  const drawerClasses = `absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-xl flex flex-col transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`;
+  
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop com animação */}
+    <div className={`fixed inset-0 z-50 ${isOpen ? 'block' : 'hidden'}`}>
+      {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300"
-        style={{ opacity: isOpen ? 1 : 0 }}
+        className="absolute inset-0 bg-black bg-opacity-50"
         onClick={onClose}
       />
       
-      {/* Drawer com animação */}
-      <div 
-        className="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-xl flex flex-col transition-transform duration-300"
-        style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
-      >
+      {/* Drawer */}
+      <div className={drawerClasses}>
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-xl font-montserrat font-semibold">Carrinho de Compras</h2>
           <button 
             onClick={onClose}
             className="p-2 hover:text-accent transition"
-            aria-label="Close cart"
+            aria-label="Fechar carrinho"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
         
-        {/* Cart Items */}
+        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {isEmpty ? (
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500 py-4">
+              {error}
+            </div>
+          ) : items.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
-              <ShoppingBagIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
               <p>Seu carrinho está vazio</p>
               <p className="mt-2 text-sm">Adicione produtos para continuar comprando</p>
             </div>
           ) : (
-            displayItems.map((item) => (
+            items.map(item => (
               <div key={item.id} className="flex border-b pb-4">
                 <div className="w-20 h-20 rounded-md overflow-hidden">
                   <img 
@@ -154,24 +190,24 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
                   <div className="text-gray-500">{item.product.formattedPrice}</div>
                   <div className="flex items-center mt-2">
                     <button 
-                      onClick={() => updateCartItemQuantity(item.id, Math.max(1, item.quantity - 1))}
+                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                       className="p-1 border rounded-md"
-                      aria-label="Decrease quantity"
+                      aria-label="Diminuir quantidade"
                     >
                       <Minus className="h-4 w-4" />
                     </button>
                     <span className="mx-2">{item.quantity}</span>
                     <button 
-                      onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
                       className="p-1 border rounded-md"
-                      aria-label="Increase quantity"
+                      aria-label="Aumentar quantidade"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
                     <button 
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeItem(item.id)}
                       className="ml-auto text-red-500"
-                      aria-label="Remove item"
+                      aria-label="Remover item"
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>
@@ -190,7 +226,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           </div>
           <button 
             onClick={handleCheckout}
-            disabled={isEmpty}
+            disabled={items.length === 0}
             className="w-full bg-accent text-white font-medium py-3 rounded-md hover:bg-opacity-90 transition mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Finalizar Compra via WhatsApp
@@ -206,23 +242,5 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     </div>
   );
 };
-
-// Shopping bag icon
-const ShoppingBagIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-    />
-  </svg>
-);
 
 export default CartDrawer;

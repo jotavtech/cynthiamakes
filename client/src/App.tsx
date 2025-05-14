@@ -11,7 +11,7 @@ import CartPage from "@/pages/CartPage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
-import { CartUIProvider, useCartUI } from "@/context/CartUIContext";
+import { useState, useEffect } from "react";
 
 function Router() {
   return (
@@ -27,8 +27,14 @@ function Router() {
   );
 }
 
-function AppContent() {
-  const { isCartOpen, openCart, closeCart, toggleCart } = useCartUI();
+function App() {
+  // Estado do carrinho
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  
+  // Funções do carrinho
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+  const toggleCart = () => setIsCartOpen(!isCartOpen);
 
   return (
     <TooltipProvider>
@@ -43,14 +49,6 @@ function AppContent() {
       <Footer />
       <Toaster />
     </TooltipProvider>
-  );
-}
-
-function App() {
-  return (
-    <CartUIProvider>
-      <AppContent />
-    </CartUIProvider>
   );
 }
 

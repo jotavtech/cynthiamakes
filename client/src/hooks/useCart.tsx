@@ -1,67 +1,88 @@
-import { useContext } from "react";
-import { CartContext } from "@/context/CartContext";
+import { useState } from "react";
+import { CartItemWithProduct } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
+// Hook simplificado para adicionar e gerenciar o carrinho
 export const useCart = () => {
-  const context = useContext(CartContext);
+  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
-  if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
+  // ID de sessão fixo para garantir consistência
+  const sessionId = '99i47ng8zigy94xt079q59';
   
-  // Função melhorada para adicionar ao carrinho e abrir o carrinho em seguida
-  const addToCartAndOpen = async (productId: number, quantity: number = 1) => {
-    console.log(`[useCart] Adicionando produto ${productId} ao carrinho e abrindo o drawer`);
+  // Função para buscar itens do carrinho
+  const fetchCartItems = async () => {
+    setIsLoading(true);
     try {
-      // Adicionar o produto ao carrinho
-      await context.addToCart(productId, quantity);
+      console.log("Buscando itens do carrinho...");
+      const response = await fetch(`/api/cart/${sessionId}`);
+      if (!response.ok) throw new Error("Falha ao buscar carrinho");
       
-      // Atualizar explicitamente os itens do carrinho antes de abri-lo
-      await context.fetchCartItems();
+      const data = await response.json();
+      console.log("Itens recebidos:", data);
+      setCartItems(data);
+      return data;
+    } catch (error) {
+      console.error("Erro ao buscar itens:", error);
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Função para adicionar produto ao carrinho
+  const addToCart = async (productId: number, quantity: number = 1) => {
+    setIsLoading(true);
+    try {
+      console.log(`Adicionando produto ${productId} ao carrinho`);
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, quantity, sessionId })
+      });
       
-      // Abrir o carrinho somente após ter certeza de que os dados foram atualizados
-      setTimeout(() => {
-        console.log("[useCart] Dados do carrinho atualizados, abrindo o drawer");
-        context.setIsCartOpen(true);
-      }, 300);
+      if (!response.ok) throw new Error("Falha ao adicionar produto");
       
+      await fetchCartItems();
       return true;
     } catch (error) {
-      console.error("[useCart] Erro ao adicionar produto:", error);
+      console.error("Erro ao adicionar produto:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o produto ao carrinho."
+      });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  // Funções auxiliares para simplificar o uso
-  const openCart = () => {
-    console.log("[useCart] Abrindo carrinho");
-    context.setIsCartOpen(true);
-  };
-  
-  const closeCart = () => {
-    console.log("[useCart] Fechando carrinho");
-    context.setIsCartOpen(false);
-  };
-  
-  const toggleCart = () => {
-    console.log("[useCart] Alternando estado do carrinho");
-    context.setIsCartOpen(!context.isCartOpen);
-  };
-  
-  // Encapsular a função fetchCartItems do contexto para garantir uma interface consistente
-  const fetchCartItems = async () => {
-    if (context.fetchCartItems) {
-      return await context.fetchCartItems();
+  // Função para adicionar ao carrinho e abrir o drawer
+  const addToCartAndOpen = async (productId: number, quantity: number = 1) => {
+    const success = await addToCart(productId, quantity);
+    if (success) {
+      setIsCartOpen(true);
     }
-    return [];
+    return success;
   };
-
-  // Retornar o contexto enriquecido com as funções auxiliares
+  
+  // Funções de controle do drawer
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+  const toggleCart = () => setIsCartOpen(!isCartOpen);
+  
   return {
-    ...context,
+    cartItems,
+    isLoading,
+    isCartOpen,
+    fetchCartItems,
+    addToCart,
+    addToCartAndOpen,
     openCart,
     closeCart,
     toggleCart,
-    addToCartAndOpen,
-    fetchCartItems
+    setIsCartOpen
   };
 };
