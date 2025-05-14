@@ -14,21 +14,34 @@ export function generateSessionId() {
 export function formatWhatsAppMessage(cartItems: any[]) {
   if (cartItems.length === 0) return '';
   
-  let message = 'Olá! Gostaria de fazer um pedido:%0A%0A';
+  let message = 'Olá! Gostaria de fazer um pedido na Cynthia Makeup:\n\n';
   
   let total = 0;
+  let itemNumber = 1;
   
   cartItems.forEach(item => {
     const subtotal = item.product.price * item.quantity / 100;
     total += subtotal;
     
-    message += `*${item.product.name}*%0A`;
-    message += `Quantidade: ${item.quantity}%0A`;
-    message += `Preço: ${item.product.formattedPrice}%0A`;
-    message += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}%0A%0A`;
+    message += `*Item ${itemNumber}: ${item.product.name}*\n`;
+    if (item.product.brand) {
+      message += `Marca: ${item.product.brand}\n`;
+    }
+    if (item.product.category) {
+      message += `Categoria: ${item.product.category}\n`;
+    }
+    message += `Quantidade: ${item.quantity} unidade${item.quantity > 1 ? 's' : ''}\n`;
+    message += `Preço unitário: ${item.product.formattedPrice}\n`;
+    message += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n\n`;
+    
+    itemNumber++;
   });
   
-  message += `*Total: R$ ${total.toFixed(2).replace('.', ',')}*%0A%0A`;
+  message += `*Resumo do Pedido:*\n`;
+  message += `Quantidade de itens: ${cartItems.length}\n`;
+  message += `Quantidade total de produtos: ${cartItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
+  message += `*Valor Total: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+  message += `Por favor, confirme meu pedido e informe as opções de pagamento. Obrigado(a)!`;
   
   return message;
 }

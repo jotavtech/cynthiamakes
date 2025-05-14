@@ -27,10 +27,10 @@ const CartDrawer = () => {
     const message = formatWhatsAppMessage(cartItems);
     const phoneNumber = "99318-7473"; // The phone number from the requirements
     
-    // Open WhatsApp with the formatted message
-    window.open(`https://api.whatsapp.com/send?phone=55${phoneNumber}&text=${message}`, '_blank');
+    // Abre o WhatsApp com a mensagem formatada
+    window.open(`https://api.whatsapp.com/send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`, '_blank');
     
-    // Clear cart after sending
+    // Limpa o carrinho e fecha o drawer após enviar
     clearCart();
     toggleCart();
   };
