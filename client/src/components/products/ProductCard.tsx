@@ -9,24 +9,29 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart } = useCart();
+  const { addToCart, toggleCart } = useCart();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddToCart = async () => {
     setIsAdding(true);
     try {
+      // Adiciona o produto ao carrinho
       await addToCart(product.id);
+      // Notifica o usuário
       toast({
         title: "Produto adicionado",
         description: `${product.name} foi adicionado ao carrinho.`,
       });
+      // Abre o carrinho automaticamente
+      toggleCart();
     } catch (error) {
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o produto ao carrinho.",
         variant: "destructive",
       });
+      console.error("Erro ao adicionar ao carrinho:", error);
     } finally {
       setIsAdding(false);
     }
