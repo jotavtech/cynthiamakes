@@ -17,6 +17,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch products" });
     }
   });
+  
+  // Rotas específicas precisam vir antes de rotas com parâmetros
+  app.get("/api/products/featured", async (req: Request, res: Response) => {
+    try {
+      const products = await storage.getFeaturedProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching featured products:", error);
+      res.status(500).json({ message: "Failed to fetch featured products" });
+    }
+  });
+
+  app.get("/api/products/category/:category", async (req: Request, res: Response) => {
+    try {
+      const { category } = req.params;
+      const products = await storage.getProductsByCategory(category);
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products by category:", error);
+      res.status(500).json({ message: "Failed to fetch products by category" });
+    }
+  });
 
   app.get("/api/products/:id", async (req: Request, res: Response) => {
     try {
@@ -34,27 +56,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching product:", error);
       res.status(500).json({ message: "Failed to fetch product" });
-    }
-  });
-
-  app.get("/api/products/category/:category", async (req: Request, res: Response) => {
-    try {
-      const { category } = req.params;
-      const products = await storage.getProductsByCategory(category);
-      res.json(products);
-    } catch (error) {
-      console.error("Error fetching products by category:", error);
-      res.status(500).json({ message: "Failed to fetch products by category" });
-    }
-  });
-
-  app.get("/api/products/featured", async (req: Request, res: Response) => {
-    try {
-      const products = await storage.getFeaturedProducts();
-      res.json(products);
-    } catch (error) {
-      console.error("Error fetching featured products:", error);
-      res.status(500).json({ message: "Failed to fetch featured products" });
     }
   });
 

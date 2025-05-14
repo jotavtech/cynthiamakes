@@ -22,7 +22,7 @@ export const products = pgTable("products", {
   category: text("category").notNull(),
   brand: text("brand").notNull(),
   imageUrl: text("image_url").notNull(),
-  videoUrl: text("video_url"),
+  videoUrl: text("video_url").notNull().default(""), 
   isNew: boolean("is_new").default(false).notNull(),
   isFeatured: boolean("is_featured").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
