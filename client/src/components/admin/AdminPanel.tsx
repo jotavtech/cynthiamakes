@@ -517,60 +517,6 @@ const AdminPanel = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Add Product Dialog */}
-      <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Adicionar Novo Produto</DialogTitle>
-          </DialogHeader>
-          <ProductForm onSubmit={handleAddProduct} />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Product Dialog */}
-      <Dialog open={isEditProductOpen} onOpenChange={setIsEditProductOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Editar Produto</DialogTitle>
-          </DialogHeader>
-          {selectedProduct && (
-            <ProductForm 
-              onSubmit={handleEditProduct} 
-              initialData={selectedProduct} 
-            />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p>
-              Tem certeza que deseja excluir o produto "{selectedProduct?.name}"? 
-              Esta ação não pode ser desfeita.
-            </p>
-          </div>
-          <div className="flex justify-end space-x-4">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteConfirmOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteProduct}
-            >
-              Excluir
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

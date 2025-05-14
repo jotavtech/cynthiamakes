@@ -5,6 +5,17 @@ import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 export const useAdmin = () => {
   const { toast } = useToast();
   
+  // Verifica se existe um usuário no localStorage (para compatibilidade com AdminContext)
+  const getStoredUser = () => {
+    try {
+      const storedUser = localStorage.getItem('adminUser');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      console.error("Error reading adminUser from localStorage:", error);
+      return null;
+    }
+  };
+
   // Busca o usuário atualmente autenticado
   const { 
     data: user, 
@@ -13,6 +24,7 @@ export const useAdmin = () => {
   } = useQuery({
     queryKey: ['/api/user'],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    initialData: getStoredUser()
   });
 
   // Mutation para fazer login
@@ -23,6 +35,12 @@ export const useAdmin = () => {
     },
     onSuccess: (user) => {
       queryClient.setQueryData(['/api/user'], user);
+      
+      // Compatibilidade com AdminContext
+      if (user.isAdmin) {
+        localStorage.setItem('adminUser', JSON.stringify(user));
+      }
+      
       toast({
         title: "Login realizado com sucesso",
         description: `Bem-vindo, ${user.username}!`,
