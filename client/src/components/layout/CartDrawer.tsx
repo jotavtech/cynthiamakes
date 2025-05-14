@@ -12,19 +12,8 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
     updateCartItemQuantity, 
     removeFromCart,
     clearCart,
-    toggleCart // Adicionando toggleCart do contexto
+    closeCart
   } = useCart();
-  
-  // Função para fechar o carrinho, usando toggleCart do contexto como principal
-  const closeCart = () => {
-    // Sempre usamos o toggleCart do contexto que é garantido como não-undefined
-    toggleCart();
-    
-    // Se também houver um callback onClose, chamamos ele também por compatibilidade
-    if (onClose) {
-      onClose();
-    }
-  };
 
   const isEmpty = cartItems.length === 0;
   
