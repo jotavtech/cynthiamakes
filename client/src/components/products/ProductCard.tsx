@@ -32,7 +32,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       console.log(`Produto ${product.id} adicionado com sucesso, abrindo o carrinho`);
       
       // Abre o carrinho após adicionar o produto
-      toggleCart();
+      openCart();
     } catch (error) {
       console.error(`Erro ao adicionar produto ${product.id} ao carrinho:`, error);
       
@@ -177,7 +177,7 @@ const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButt
       
       // Abre o carrinho após adicionar o produto
       console.log("Abrindo o carrinho após adicionar produto");
-      toggleCart();
+      openCart();
     } catch (error) {
       console.error(`AddToCartButton: Erro ao adicionar produto ${productId} ao carrinho:`, error);
       
