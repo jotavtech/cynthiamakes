@@ -70,7 +70,10 @@ const Header = () => {
             </button>
             
             <button 
-              onClick={toggleCart}
+              onClick={() => {
+                console.log("Cart button clicked");
+                toggleCart();
+              }}
               className="p-2 hover:text-accent transition relative"
               aria-label="Shopping cart"
             >

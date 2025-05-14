@@ -149,6 +149,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const toggleCart = () => {
+    console.log("Toggling cart from", isCartOpen, "to", !isCartOpen);
     setIsCartOpen(!isCartOpen);
   };
 

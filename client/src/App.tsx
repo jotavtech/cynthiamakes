@@ -29,6 +29,8 @@ function Router() {
 
 function App() {
   const { isCartOpen } = useCart();
+  
+  console.log("App render - isCartOpen:", isCartOpen);
 
   return (
     <TooltipProvider>
