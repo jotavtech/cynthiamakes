@@ -342,7 +342,10 @@ export class MemStorage implements IStorage {
         brand: "Cynthia Beauty",
         imageUrl: "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=500&q=80",
         isNew: true,
-        isFeatured: false
+        isFeatured: false,
+        stock: 45,
+        lowStockThreshold: 10,
+        sku: "BASE-HD-001"
       },
       {
         name: "Paleta de Sombras Colorful",
@@ -352,7 +355,10 @@ export class MemStorage implements IStorage {
         brand: "Cynthia Beauty",
         imageUrl: "https://pixabay.com/get/g30a89816ea1c2b83d0bf92e96f89d762568a8bf4f211be224d1c9b4e645e88bc80a858480604b2afd0fd94a1d5b5062f5f4f3e51dd9f427e1894c659ade5f25a_1280.jpg",
         isNew: false,
-        isFeatured: false
+        isFeatured: false,
+        stock: 18,
+        lowStockThreshold: 5,
+        sku: "PALETTE-COL-002"
       },
       {
         name: "Batom Matte Longa Duração",
@@ -362,7 +368,10 @@ export class MemStorage implements IStorage {
         brand: "Cynthia Beauty",
         imageUrl: "https://pixabay.com/get/gaf98a7f448dc320934892b79c7238885f0a1289f295b5a29ec26c6563e5d403dd2f8ea00be4927a4034d22c34941048fb9c5f62ee56ae9a4b99aadd1c7eb7129_1280.jpg",
         isNew: false,
-        isFeatured: false
+        isFeatured: true,
+        stock: 3,
+        lowStockThreshold: 5,
+        sku: "LIPSTICK-MAT-003"
       },
       {
         name: "Kit de Pincéis Profissionais",
@@ -372,7 +381,10 @@ export class MemStorage implements IStorage {
         brand: "Cynthia Beauty",
         imageUrl: "https://pixabay.com/get/gd526e95c82444b43af92cf85cb8947b12e2ca7b9b29fbc301498f8064e88df85613583172ed66b1ad35a6484d7fb63ab3334bb34c94310931992337175b588bd_1280.jpg",
         isNew: false,
-        isFeatured: false
+        isFeatured: false,
+        stock: 0,
+        lowStockThreshold: 5,
+        sku: "BRUSH-KIT-004"
       },
       {
         name: "Máscara para Cílios Volume Extreme",

@@ -133,6 +133,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete product" });
     }
   });
+  
+  // Inventory Management Routes
+  app.get("/api/inventory/low-stock", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const products = await storage.getLowStockProducts(limit);
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching low stock products:", error);
+      res.status(500).json({ message: "Failed to fetch low stock products" });
+    }
+  });
+  
+  app.get("/api/inventory/transactions", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      
+      if (req.query.productId && isNaN(productId as number)) {
+        return res.status(400).json({ message: "Invalid product ID" });
+      }
+      
+      const transactions = await storage.getInventoryTransactions(productId, limit);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching inventory transactions:", error);
+      res.status(500).json({ message: "Failed to fetch inventory transactions" });
+    }
+  });
+  
+  app.post("/api/inventory/update-stock", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { productId, stockChange, transactionType, notes } = req.body;
+      
+      // Validar entrada
+      const stockUpdateSchema = z.object({
+        productId: z.number(),
+        stockChange: z.number(),
+        transactionType: z.enum(["purchase", "sale", "adjustment", "return"]),
+        notes: z.string().optional()
+      });
+      
+      const validatedData = stockUpdateSchema.parse(req.body);
+      
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const updatedProduct = await storage.updateProductStock(
+        validatedData.productId,
+        validatedData.stockChange,
+        req.user.id,
+        validatedData.transactionType,
+        validatedData.notes
+      );
+      
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      res.json(updatedProduct);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid stock update data", 
+          errors: error.errors 
+        });
+      }
+      console.error("Error updating stock:", error);
+      res.status(500).json({ message: "Failed to update stock" });
+    }
+  });
 
   // Cart routes
   app.get("/api/cart/:sessionId", async (req: Request, res: Response) => {
