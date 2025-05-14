@@ -151,7 +151,8 @@ interface AddToCartButtonProps {
 }
 
 const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButtonProps) => {
-  const { addToCart, openCart } = useCart();
+  const { addToCart } = useCart();
+  const { openCart } = useCartUI();
   const { toast } = useToast();
   const [isAddingInternal, setIsAddingInternal] = useState(false);
   

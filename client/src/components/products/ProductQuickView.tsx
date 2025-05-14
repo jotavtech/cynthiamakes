@@ -3,6 +3,7 @@ import { X, Star, StarHalf, Plus, Minus } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { DisplayProduct } from "@shared/schema";
+import { useCartUI } from "@/context/CartUIContext";
 
 interface ProductQuickViewProps {
   product: DisplayProduct;
@@ -11,7 +12,8 @@ interface ProductQuickViewProps {
 }
 
 const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) => {
-  const { addToCart, openCart } = useCart();
+  const { addToCart } = useCart();
+  const { openCart } = useCartUI();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
