@@ -8,9 +8,13 @@ import {
   CartItemWithProduct,
   DisplayProduct
 } from "@shared/schema";
+import session from "express-session";
+import { DatabaseStorage } from "./storage-db";
 
 // Interface for storage operations
 export interface IStorage {
+  // Session store para autenticação
+  sessionStore: session.Store;
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -342,4 +346,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Use o armazenamento baseado em banco de dados PostgreSQL
+export const storage = new DatabaseStorage();
