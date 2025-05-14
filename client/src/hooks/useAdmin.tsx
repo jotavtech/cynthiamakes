@@ -39,6 +39,9 @@ export function useAdmin() {
       // Compatibilidade com AdminContext
       if (user.isAdmin) {
         localStorage.setItem('adminUser', JSON.stringify(user));
+        
+        // Redireciona diretamente para a área administrativa
+        window.location.href = '/admin';
       }
       
       toast({

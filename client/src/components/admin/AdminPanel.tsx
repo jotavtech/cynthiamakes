@@ -37,7 +37,7 @@ const AdminPanel = () => {
   const [isViewProductOpen, setIsViewProductOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<DisplayProduct | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("products");
 
   const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],

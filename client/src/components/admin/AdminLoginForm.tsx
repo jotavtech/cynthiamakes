@@ -105,9 +105,10 @@ const AdminLoginForm = ({ onClose }: AdminLoginFormProps) => {
             </Button>
           </form>
         </Form>
-        <div className="mt-4 text-xs text-gray-500">
-          <p>Usuário padrão: adminuser</p>
-          <p>Senha padrão: adminpass</p>
+        <div className="mt-4 text-sm text-gray-500 p-3 bg-gray-50 rounded-md border border-gray-100">
+          <div className="font-medium mb-1">Credenciais de Administrador:</div>
+          <p>Usuário: <span className="font-mono">adminuser</span></p>
+          <p>Senha: <span className="font-mono">adminpass</span></p>
         </div>
       </CardContent>
     </Card>
