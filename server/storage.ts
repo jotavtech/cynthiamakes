@@ -112,38 +112,26 @@ export class MemStorage implements IStorage {
 
   // Product methods
   async getProducts(): Promise<DisplayProduct[]> {
-    return Array.from(this.products.values()).map(product => ({
-      ...product,
-      formattedPrice: formatPrice(product.price)
-    }));
+    return Array.from(this.products.values()).map(product => this.formatProduct(product));
   }
 
   async getProductById(id: number): Promise<DisplayProduct | undefined> {
     const product = this.products.get(id);
     if (!product) return undefined;
     
-    return {
-      ...product,
-      formattedPrice: formatPrice(product.price)
-    };
+    return this.formatProduct(product);
   }
 
   async getProductsByCategory(category: string): Promise<DisplayProduct[]> {
     return Array.from(this.products.values())
       .filter(product => product.category === category)
-      .map(product => ({
-        ...product,
-        formattedPrice: formatPrice(product.price)
-      }));
+      .map(product => this.formatProduct(product));
   }
 
   async getFeaturedProducts(): Promise<DisplayProduct[]> {
     return Array.from(this.products.values())
       .filter(product => product.isFeatured)
-      .map(product => ({
-        ...product,
-        formattedPrice: formatPrice(product.price)
-      }));
+      .map(product => this.formatProduct(product));
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<DisplayProduct> {
@@ -162,14 +150,95 @@ export class MemStorage implements IStorage {
       videoUrl: insertProduct.videoUrl || "",
       isNew: insertProduct.isNew || false,
       isFeatured: insertProduct.isFeatured || false,
+      stock: insertProduct.stock || 0,
+      lowStockThreshold: insertProduct.lowStockThreshold || 5,
+      sku: insertProduct.sku || `SKU-${id}`,
       createdAt: now
     };
     
     this.products.set(id, product);
     
+    return this.formatProduct(product);
+  }
+  
+  // Inventory management methods
+  async updateProductStock(id: number, stockChange: number, userId: number, transactionType: string, notes?: string): Promise<DisplayProduct | undefined> {
+    const product = this.products.get(id);
+    if (!product) return undefined;
+    
+    // Update stock
+    const updatedProduct = { 
+      ...product, 
+      stock: Math.max(0, product.stock + stockChange) // Prevent negative stock
+    };
+    this.products.set(id, updatedProduct);
+    
+    // Create inventory transaction
+    await this.createInventoryTransaction({
+      productId: id,
+      quantity: stockChange,
+      type: transactionType,
+      notes: notes || "",
+      createdBy: userId
+    });
+    
+    return this.formatProduct(updatedProduct);
+  }
+  
+  async getProductStock(id: number): Promise<number> {
+    const product = this.products.get(id);
+    return product ? product.stock : 0;
+  }
+  
+  async getLowStockProducts(limit: number = 10): Promise<DisplayProduct[]> {
+    return Array.from(this.products.values())
+      .filter(product => product.stock <= product.lowStockThreshold)
+      .slice(0, limit)
+      .map(product => this.formatProduct(product));
+  }
+  
+  async getInventoryTransactions(productId?: number, limit: number = 20): Promise<InventoryTransaction[]> {
+    let transactions = Array.from(this.inventoryTransactions.values());
+    
+    if (productId) {
+      transactions = transactions.filter(tx => tx.productId === productId);
+    }
+    
+    // Sort by most recent first
+    transactions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    return transactions.slice(0, limit);
+  }
+  
+  async createInventoryTransaction(transaction: InsertInventoryTransaction): Promise<InventoryTransaction> {
+    const id = this.currentInventoryTransactionId++;
+    const now = new Date();
+    
+    const newTransaction: InventoryTransaction = {
+      ...transaction,
+      id,
+      createdAt: now
+    };
+    
+    this.inventoryTransactions.set(id, newTransaction);
+    return newTransaction;
+  }
+  
+  // Helper method for consistent product formatting
+  private formatProduct(product: Product): DisplayProduct {
+    // Determine stock status
+    let stockStatus: "in_stock" | "low_stock" | "out_of_stock" = "in_stock";
+    
+    if (product.stock <= 0) {
+      stockStatus = "out_of_stock";
+    } else if (product.stock <= product.lowStockThreshold) {
+      stockStatus = "low_stock";
+    }
+    
     return {
       ...product,
-      formattedPrice: formatPrice(product.price)
+      formattedPrice: formatPrice(product.price),
+      stockStatus
     };
   }
 
@@ -184,10 +253,7 @@ export class MemStorage implements IStorage {
     
     this.products.set(id, updatedProduct);
     
-    return {
-      ...updatedProduct,
-      formattedPrice: formatPrice(updatedProduct.price)
-    };
+    return this.formatProduct(updatedProduct);
   }
 
   async deleteProduct(id: number): Promise<boolean> {
