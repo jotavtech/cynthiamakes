@@ -19,24 +19,26 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   const handleAddToCart = async () => {
     setIsAdding(true);
-    console.log(`Tentando adicionar produto ${product.id} (${product.name}) ao carrinho`);
+    console.log(`[ProductCard] Tentando adicionar produto ${product.id} (${product.name}) ao carrinho`);
     
     try {
-      // Adiciona o produto ao carrinho
-      await addToCart(product.id);
+      // Usa a função melhorada que adiciona ao carrinho e abre o drawer
+      const { addToCartAndOpen } = useCart();
+      const success = await addToCartAndOpen(product.id);
       
-      // Notifica o usuário
-      toast({
-        title: "Produto adicionado",
-        description: `${product.name} foi adicionado ao carrinho.`,
-      });
-      
-      console.log(`Produto ${product.id} adicionado com sucesso, abrindo o carrinho`);
-      
-      // Abre o carrinho após adicionar o produto
-      openCart();
+      if (success) {
+        // Notifica o usuário
+        toast({
+          title: "Produto adicionado",
+          description: `${product.name} foi adicionado ao carrinho.`,
+        });
+        
+        console.log(`[ProductCard] Produto ${product.id} adicionado com sucesso e carrinho aberto`);
+      } else {
+        throw new Error("Falha ao adicionar produto");
+      }
     } catch (error) {
-      console.error(`Erro ao adicionar produto ${product.id} ao carrinho:`, error);
+      console.error(`[ProductCard] Erro ao adicionar produto ${product.id} ao carrinho:`, error);
       
       toast({
         title: "Erro",
@@ -151,8 +153,7 @@ interface AddToCartButtonProps {
 }
 
 const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButtonProps) => {
-  const { addToCart } = useCart();
-  const { openCart } = useCartUI();
+  const { addToCartAndOpen } = useCart();
   const { toast } = useToast();
   const [isAddingInternal, setIsAddingInternal] = useState(false);
   
@@ -160,29 +161,29 @@ const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButt
   
   const handleClick = async () => {
     if (onClick) {
-      console.log("Delegando adição ao carrinho para o componente pai");
+      console.log("[AddToCartButton] Delegando adição ao carrinho para o componente pai");
       onClick();
       return;
     }
     
-    console.log(`AddToCartButton: Tentando adicionar produto ${productId} ao carrinho`);
+    console.log(`[AddToCartButton] Tentando adicionar produto ${productId} ao carrinho`);
     setIsAddingInternal(true);
     
     try {
-      await addToCart(productId);
+      const success = await addToCartAndOpen(productId);
       
-      console.log(`AddToCartButton: Produto ${productId} adicionado com sucesso`);
-      
-      toast({
-        title: "Produto adicionado",
-        description: "O produto foi adicionado ao carrinho.",
-      });
-      
-      // Abre o carrinho após adicionar o produto
-      console.log("Abrindo o carrinho após adicionar produto");
-      openCart();
+      if (success) {
+        console.log(`[AddToCartButton] Produto ${productId} adicionado com sucesso e carrinho aberto`);
+        
+        toast({
+          title: "Produto adicionado",
+          description: "O produto foi adicionado ao carrinho.",
+        });
+      } else {
+        throw new Error("Falha ao adicionar produto");
+      }
     } catch (error) {
-      console.error(`AddToCartButton: Erro ao adicionar produto ${productId} ao carrinho:`, error);
+      console.error(`[AddToCartButton] Erro ao adicionar produto ${productId} ao carrinho:`, error);
       
       toast({
         title: "Erro",

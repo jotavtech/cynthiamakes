@@ -23,22 +23,27 @@ const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) =
   const handleAddToCart = async () => {
     setIsAdding(true);
     try {
-      await addToCart(product.id, quantity);
-      toast({
-        title: "Produto adicionado",
-        description: `${product.name} foi adicionado ao carrinho.`,
-      });
-      // Fechar o modal de visualização rápida
-      onClose();
-      // Abrir o carrinho automaticamente após adicionar o produto
-      openCart();
+      // Usar a função unificada que adiciona o produto e abre o carrinho
+      const { addToCartAndOpen } = useCart();
+      const success = await addToCartAndOpen(product.id, quantity);
+      
+      if (success) {
+        toast({
+          title: "Produto adicionado",
+          description: `${product.name} foi adicionado ao carrinho.`,
+        });
+        // Fechar o modal de visualização rápida
+        onClose();
+      } else {
+        throw new Error("Falha ao adicionar produto");
+      }
     } catch (error) {
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o produto ao carrinho.",
         variant: "destructive",
       });
-      console.error("Erro ao adicionar ao carrinho:", error);
+      console.error("[ProductQuickView] Erro ao adicionar ao carrinho:", error);
     } finally {
       setIsAdding(false);
     }

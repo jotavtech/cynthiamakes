@@ -8,19 +8,32 @@ export const useCart = () => {
     throw new Error("useCart must be used within a CartProvider");
   }
   
-  // Adicionar funções auxiliares para simplificar o uso
+  // Função melhorada para adicionar ao carrinho e abrir o carrinho em seguida
+  const addToCartAndOpen = async (productId: number, quantity: number = 1) => {
+    console.log(`[useCart] Adicionando produto ${productId} ao carrinho e abrindo o drawer`);
+    try {
+      await context.addToCart(productId, quantity);
+      context.setIsCartOpen(true);
+      return true;
+    } catch (error) {
+      console.error("[useCart] Erro ao adicionar produto:", error);
+      return false;
+    }
+  };
+  
+  // Funções auxiliares para simplificar o uso
   const openCart = () => {
-    console.log("useCart: Abrindo carrinho");
+    console.log("[useCart] Abrindo carrinho");
     context.setIsCartOpen(true);
   };
   
   const closeCart = () => {
-    console.log("useCart: Fechando carrinho");
+    console.log("[useCart] Fechando carrinho");
     context.setIsCartOpen(false);
   };
   
   const toggleCart = () => {
-    console.log("useCart: Alternando estado do carrinho");
+    console.log("[useCart] Alternando estado do carrinho");
     context.setIsCartOpen(!context.isCartOpen);
   };
   
@@ -29,6 +42,7 @@ export const useCart = () => {
     ...context,
     openCart,
     closeCart,
-    toggleCart
+    toggleCart,
+    addToCartAndOpen
   };
 };
