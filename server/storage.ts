@@ -6,7 +6,9 @@ import {
   CartItem, 
   InsertCartItem, 
   CartItemWithProduct,
-  DisplayProduct
+  DisplayProduct,
+  InventoryTransaction,
+  InsertInventoryTransaction
 } from "@shared/schema";
 import session from "express-session";
 import { DatabaseStorage } from "./storage-db";
@@ -29,6 +31,13 @@ export interface IStorage {
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<DisplayProduct | undefined>;
   deleteProduct(id: number): Promise<boolean>;
   
+  // Inventory methods
+  updateProductStock(id: number, stockChange: number, userId: number, transactionType: string, notes?: string): Promise<DisplayProduct | undefined>;
+  getProductStock(id: number): Promise<number>;
+  getLowStockProducts(limit?: number): Promise<DisplayProduct[]>;
+  getInventoryTransactions(productId?: number, limit?: number): Promise<InventoryTransaction[]>;
+  createInventoryTransaction(transaction: InsertInventoryTransaction): Promise<InventoryTransaction>;
+  
   // Cart methods
   getCart(sessionId: string): Promise<CartItemWithProduct[]>;
   addToCart(item: InsertCartItem): Promise<CartItem>;
@@ -46,17 +55,28 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private products: Map<number, Product>;
   private cartItems: Map<number, CartItem>;
+  private inventoryTransactions: Map<number, InventoryTransaction>;
   private currentUserId: number;
   private currentProductId: number;
   private currentCartItemId: number;
+  private currentInventoryTransactionId: number;
+  sessionStore: session.Store;
 
   constructor() {
     this.users = new Map();
     this.products = new Map();
     this.cartItems = new Map();
+    this.inventoryTransactions = new Map();
     this.currentUserId = 1;
     this.currentProductId = 1;
     this.currentCartItemId = 1;
+    this.currentInventoryTransactionId = 1;
+    
+    // Create memory session store
+    const MemoryStore = require('memorystore')(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
     
     // Add admin user
     this.createUser({
