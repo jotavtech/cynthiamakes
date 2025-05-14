@@ -14,6 +14,26 @@ export function generateSessionId() {
 }
 
 // Format WhatsApp message for cart checkout
+// Formatar número de telefone para o formato do WhatsApp
+export function formatPhoneNumber(phone: string): string {
+  // Remove todos os caracteres não numéricos
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Certifique-se de que o número comece com o código do país (Brasil = 55)
+  // Se não começar com 55, adiciona-o
+  if (cleaned.startsWith('55')) {
+    return cleaned;
+  }
+  return '55' + cleaned;
+}
+
+// Gerar URL do WhatsApp com a mensagem formatada
+export function generateWhatsAppURL(phone: string, message: string): string {
+  const formattedPhone = formatPhoneNumber(phone);
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+}
+
 export function formatWhatsAppMessage(cartItems: any[]) {
   if (cartItems.length === 0) return '';
   

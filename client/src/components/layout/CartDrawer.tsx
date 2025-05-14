@@ -1,7 +1,8 @@
-import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { X, Minus, Plus, Trash2, ShoppingBag, Send } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import { formatWhatsAppMessage } from "@/lib/utils";
+import { formatWhatsAppMessage, generateWhatsAppURL } from "@/lib/utils";
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -15,6 +16,11 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     removeFromCart,
     clearCart
   } = useCart();
+  
+  const { toast } = useToast();
+  
+  // Número de telefone da Cynthia Makeup (conforme solicitado)
+  const PHONE_NUMBER = "83993187473";
   
   const [isVisible, setIsVisible] = useState(false);
   
@@ -52,21 +58,35 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const handleCheckout = () => {
     if (isEmpty) return;
     
-    // Criando a mensagem formatada para o WhatsApp
-    const message = formatWhatsAppMessage(cartItems);
-    const phoneNumber = "83993187473"; // O número do WhatsApp completo com DDD
-    
-    // Logging para debug
-    console.log("Enviando pedido para WhatsApp:", message);
-    
-    // Abre o WhatsApp com a mensagem formatada
-    window.open(`https://api.whatsapp.com/send?phone=55${phoneNumber}&text=${encodeURIComponent(message)}`, '_blank');
-    
-    // Limpa o carrinho e fecha o drawer após enviar
-    clearCart();
-    onClose();
-    
-    console.log("Carrinho limpo e fechado após envio do pedido");
+    try {
+      // Criando a mensagem formatada para o WhatsApp
+      const message = formatWhatsAppMessage(cartItems);
+      
+      // Logging para debug
+      console.log("Enviando pedido para WhatsApp:", message);
+      
+      // Gerar URL do WhatsApp com a mensagem e abrir em nova aba
+      const whatsappUrl = generateWhatsAppURL(PHONE_NUMBER, message);
+      window.open(whatsappUrl, '_blank');
+      
+      toast({
+        title: "Pedido enviado!",
+        description: "Seu pedido foi enviado para o WhatsApp da Cynthia Makeup.",
+      });
+      
+      // Limpa o carrinho e fecha o drawer após enviar
+      clearCart();
+      onClose();
+      
+      console.log("Carrinho limpo e fechado após envio do pedido");
+    } catch (error) {
+      console.error("Erro ao enviar para o WhatsApp:", error);
+      toast({
+        title: "Erro ao enviar pedido",
+        description: "Não foi possível enviar seu pedido. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
