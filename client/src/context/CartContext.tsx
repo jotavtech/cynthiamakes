@@ -18,6 +18,8 @@ interface CartContextType {
   removeFromCart: (cartItemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
   toggleCart: () => void;
+  openCart: () => void;   // Função explícita para abrir o carrinho
+  closeCart: () => void;  // Função explícita para fechar o carrinho
 }
 
 export const CartContext = createContext<CartContextType>({
@@ -29,6 +31,8 @@ export const CartContext = createContext<CartContextType>({
   removeFromCart: async () => {},
   clearCart: async () => {},
   toggleCart: () => {},
+  openCart: () => {},
+  closeCart: () => {},
 });
 
 interface CartProviderProps {
@@ -134,7 +138,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       
       // Abrir o carrinho após adicionar o produto
       console.log("Abrindo o carrinho automaticamente");
-      setIsCartOpen(true);
+      openCart();
     } catch (error) {
       console.error("Erro ao adicionar ao carrinho:", error);
       toast({
@@ -232,7 +236,18 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   const toggleCart = () => {
     console.log("Toggling cart from", isCartOpen, "to", !isCartOpen);
-    setIsCartOpen(!isCartOpen);
+    setIsCartOpen(prevState => !prevState);
+  };
+  
+  // Funções específicas para abrir e fechar o carrinho
+  const openCart = () => {
+    console.log("Opening cart explicitly");
+    setIsCartOpen(true);
+  };
+  
+  const closeCart = () => {
+    console.log("Closing cart explicitly");
+    setIsCartOpen(false);
   };
 
   return (
@@ -246,6 +261,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         removeFromCart,
         clearCart,
         toggleCart,
+        openCart,
+        closeCart,
       }}
     >
       {children}

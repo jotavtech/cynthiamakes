@@ -10,7 +10,7 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart, toggleCart } = useCart();
+  const { addToCart, openCart } = useCart();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
@@ -149,7 +149,7 @@ interface AddToCartButtonProps {
 }
 
 const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButtonProps) => {
-  const { addToCart, toggleCart } = useCart();
+  const { addToCart, openCart } = useCart();
   const { toast } = useToast();
   const [isAddingInternal, setIsAddingInternal] = useState(false);
   
