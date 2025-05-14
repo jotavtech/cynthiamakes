@@ -11,7 +11,7 @@ interface ProductQuickViewProps {
 }
 
 const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) => {
-  const { addToCart } = useCart();
+  const { addToCart, toggleCart } = useCart();
   const { toast } = useToast();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -26,7 +26,10 @@ const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) =
         title: "Produto adicionado",
         description: `${product.name} foi adicionado ao carrinho.`,
       });
-      // Don't close the modal immediately, just show the success message
+      // Fechar o modal de visualização rápida
+      onClose();
+      // Abrir o carrinho automaticamente após adicionar o produto
+      toggleCart();
     } catch (error) {
       toast({
         title: "Erro",

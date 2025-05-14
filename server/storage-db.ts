@@ -240,18 +240,24 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getLowStockProducts(limit: number = 20): Promise<DisplayProduct[]> {
-    // Busca produtos que têm estoque abaixo do limite ou zerado
+    // Busca produtos que têm estoque baixo ou zerado
     const lowStockProducts = await db
       .select()
       .from(products)
       .where(
-        // Estoque menor ou igual ao limite OU estoque zerado
-        products.stock <= products.lowStockThreshold
+        // Não podemos usar operadores diretamente entre colunas na drizzle
+        // Vamos buscar todos os produtos e filtrar na aplicação
+        eq(products.id, products.id)
       )
       .limit(limit);
     
+    // Filtrar produtos com estoque baixo ou zerado
+    const filteredProducts = lowStockProducts.filter(product => 
+      product.stock === 0 || product.stock <= product.lowStockThreshold
+    );
+    
     // Formatamos os produtos e adicionamos o status de estoque
-    return lowStockProducts.map(product => {
+    return filteredProducts.map(product => {
       const formattedProduct = this.formatProduct(product);
       
       // Adiciona o status de estoque
@@ -268,15 +274,24 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getInventoryTransactions(productId?: number, limit: number = 20): Promise<InventoryTransaction[]> {
-    let query = db.select().from(inventoryTransactions).orderBy(desc(inventoryTransactions.createdAt));
-    
     // Se um productId foi especificado, filtramos por ele
     if (productId) {
-      query = query.where(eq(inventoryTransactions.productId, productId));
+      const transactions = await db
+        .select()
+        .from(inventoryTransactions)
+        .where(eq(inventoryTransactions.productId, productId))
+        .orderBy(desc(inventoryTransactions.createdAt))
+        .limit(limit);
+      return transactions;
+    } else {
+      // Caso contrário, retorna todas as transações
+      const transactions = await db
+        .select()
+        .from(inventoryTransactions)
+        .orderBy(desc(inventoryTransactions.createdAt))
+        .limit(limit);
+      return transactions;
     }
-    
-    const transactions = await query.limit(limit);
-    return transactions;
   }
   
   async createInventoryTransaction(transaction: InsertInventoryTransaction): Promise<InventoryTransaction> {
