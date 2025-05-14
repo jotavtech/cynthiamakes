@@ -6,7 +6,7 @@ import {
 } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { generateSessionId } from "@/lib/utils";
+import { SESSION_ID } from "@/lib/sessionManager";
 import { CartItemWithProduct } from "@shared/schema";
 
 interface CartContextType {
@@ -39,74 +39,32 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [sessionId, setSessionId] = useState<string>("");
   const { toast } = useToast();
 
-  // Initialize session ID
+  // SESSION_ID é uma constante importada de sessionManager que já contém o ID da sessão
+
+  // Buscar itens do carrinho na montagem do componente
   useEffect(() => {
-    console.log("Initializing session ID");
-    
-    try {
-      // Verificar se existe uma sessão no localStorage
-      let storedSessionId = localStorage.getItem("cartSessionId");
-      
-      // Verificar se o ID já existe e é válido
-      if (storedSessionId && storedSessionId.length > 10) {
-        console.log("Usando ID de sessão existente:", storedSessionId);
-        setSessionId(storedSessionId);
-      } else {
-        // Gerar um novo ID de sessão
-        const newSessionId = generateSessionId();
-        console.log("Criando novo ID de sessão:", newSessionId);
-        
-        // Salvar no localStorage
-        try {
-          localStorage.setItem("cartSessionId", newSessionId);
-          console.log("ID de sessão salvo no localStorage");
-        } catch (storageError) {
-          console.error("Erro ao salvar ID de sessão no localStorage:", storageError);
-        }
-        
-        setSessionId(newSessionId);
-      }
-    } catch (error) {
-      console.error("Erro ao inicializar ID de sessão:", error);
-      
-      // Fallback - criar um ID temporário mesmo se houver erro
-      const fallbackId = `fallback_${Date.now()}`;
-      setSessionId(fallbackId);
-    }
+    console.log("Inicializando carrinho com SESSION_ID:", SESSION_ID);
+    fetchCartItems();
   }, []);
 
-  // Fetch cart items when session ID is available
-  useEffect(() => {
-    if (sessionId) {
-      console.log("Session ID is available, fetching cart items:", sessionId);
-      fetchCartItems();
-    }
-  }, [sessionId]);
-
   const fetchCartItems = async () => {
-    if (!sessionId) {
-      console.log("No session ID available, can't fetch cart items");
-      return;
-    }
-    
-    console.log("Fetching cart items for session:", sessionId);
+    console.log("Buscando itens do carrinho para a sessão:", SESSION_ID);
     setIsLoading(true);
     try {
-      // Usar apiRequest para garantir que estamos enviando cookies e headers corretos
-      const response = await fetch(`/api/cart/${sessionId}`);
+      // Fazer requisição para a API
+      const response = await fetch(`/api/cart/${SESSION_ID}`);
       if (!response.ok) {
-        console.error("Failed to fetch cart:", response.status, response.statusText);
-        throw new Error("Failed to fetch cart");
+        console.error("Falha ao buscar carrinho:", response.status, response.statusText);
+        throw new Error("Falha ao buscar carrinho");
       }
       
       const data = await response.json();
-      console.log("Cart items fetched:", data);
+      console.log("Itens do carrinho obtidos:", data);
       setCartItems(data);
     } catch (error) {
-      console.error("Error fetching cart:", error);
+      console.error("Erro ao buscar itens do carrinho:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os itens do carrinho.",
@@ -118,17 +76,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const addToCart = async (productId: number, quantity = 1) => {
-    if (!sessionId) {
-      console.error("Não foi possível adicionar ao carrinho: ID de sessão não disponível");
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o produto ao carrinho. Tente recarregar a página.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    console.log(`Adicionando produto ${productId} ao carrinho com quantidade ${quantity} usando sessionId ${sessionId}`);
+    console.log(`Adicionando produto ${productId} ao carrinho com quantidade ${quantity} usando SESSION_ID ${SESSION_ID}`);
     
     try {
       // Primeiro vamos verificar se o produto já existe no carrinho
@@ -167,7 +115,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
           body: JSON.stringify({
             productId,
             quantity,
-            sessionId,
+            sessionId: SESSION_ID,
           }),
         });
         
@@ -199,11 +147,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const updateCartItemQuantity = async (cartItemId: number, quantity: number) => {
-    if (!sessionId) {
-      console.error("Não foi possível atualizar item: ID de sessão não disponível");
-      return;
-    }
-    
     console.log(`Atualizando quantidade do item ${cartItemId} para ${quantity}`);
     
     try {
@@ -235,11 +178,6 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const removeFromCart = async (cartItemId: number) => {
-    if (!sessionId) {
-      console.error("Não foi possível remover item: ID de sessão não disponível");
-      return;
-    }
-    
     console.log(`Removendo item ${cartItemId} do carrinho`);
     
     try {
@@ -266,15 +204,10 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const clearCart = async () => {
-    if (!sessionId) {
-      console.error("Não foi possível limpar carrinho: ID de sessão não disponível");
-      return;
-    }
-    
-    console.log(`Limpando todos os itens do carrinho para a sessão ${sessionId}`);
+    console.log(`Limpando todos os itens do carrinho para a sessão ${SESSION_ID}`);
     
     try {
-      const response = await fetch(`/api/cart/clear/${sessionId}`, {
+      const response = await fetch(`/api/cart/clear/${SESSION_ID}`, {
         method: "DELETE",
       });
       
