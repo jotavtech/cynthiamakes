@@ -11,29 +11,25 @@ import { CartItemWithProduct } from "@shared/schema";
 
 interface CartContextType {
   cartItems: CartItemWithProduct[];
-  isCartOpen: boolean;
   isLoading: boolean;
+  isCartOpen: boolean;
+  setIsCartOpen: (isOpen: boolean) => void;
   addToCart: (productId: number, quantity?: number) => Promise<void>;
   updateCartItemQuantity: (cartItemId: number, quantity: number) => Promise<void>;
   removeFromCart: (cartItemId: number) => Promise<void>;
   clearCart: () => Promise<void>;
-  toggleCart: () => void;
-  openCart: () => void;
-  closeCart: () => void;
 }
 
-// Criando um contexto padrão
+// Definindo valores padrão do contexto
 const defaultContext: CartContextType = {
   cartItems: [],
-  isCartOpen: false,
   isLoading: false,
+  isCartOpen: false,
+  setIsCartOpen: () => {},
   addToCart: async () => {},
   updateCartItemQuantity: async () => {},
   removeFromCart: async () => {},
   clearCart: async () => {},
-  toggleCart: () => {},
-  openCart: () => {},
-  closeCart: () => {},
 };
 
 export const CartContext = createContext<CartContextType>(defaultContext);
@@ -140,7 +136,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
       
       // Abrir o carrinho após adicionar o produto
       console.log("Abrindo o carrinho automaticamente");
-      openCart();
+      setIsCartOpen(true);
     } catch (error) {
       console.error("Erro ao adicionar ao carrinho:", error);
       toast({
@@ -236,37 +232,22 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     }
   };
 
-  // Função para alternar a visibilidade do carrinho
-  const toggleCart = () => {
-    console.log("Alternando carrinho de", isCartOpen, "para", !isCartOpen);
-    setIsCartOpen(prevState => !prevState);
-  };
-  
-  // Função explícita para abrir o carrinho
-  const openCart = () => {
-    console.log("Abrindo carrinho explicitamente");
-    setIsCartOpen(true);
-  };
-  
-  // Função explícita para fechar o carrinho
-  const closeCart = () => {
-    console.log("Fechando carrinho explicitamente");
-    setIsCartOpen(false);
-  };
+  // Logging de mudanças de estado
+  useEffect(() => {
+    console.log("Estado do carrinho foi alterado para:", isCartOpen ? "aberto" : "fechado");
+  }, [isCartOpen]);
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
         isCartOpen,
+        setIsCartOpen,
         isLoading,
         addToCart,
         updateCartItemQuantity,
         removeFromCart,
         clearCart,
-        toggleCart,
-        openCart,
-        closeCart,
       }}
     >
       {children}

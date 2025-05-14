@@ -1,30 +1,49 @@
-import { X, Minus, Plus, Trash2 } from "lucide-react";
+import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { formatWhatsAppMessage } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 interface CartDrawerProps {
-  onClose?: () => void; // Tornando opcional para compatibilidade
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const CartDrawer = ({ onClose }: CartDrawerProps) => {
+const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const { 
     cartItems, 
     updateCartItemQuantity, 
     removeFromCart,
-    clearCart,
-    closeCart
+    clearCart
   } = useCart();
+  
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Efeito para controlar a animação
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true);
+    } else {
+      // Quando fechamos, aguardamos a animação terminar antes de esconder
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+  
+  // Se não estiver visível, não renderizar
+  if (!isVisible) return null;
 
   const isEmpty = cartItems.length === 0;
   
-  // Calculate total price
+  // Calcular preço total
   const totalPrice = cartItems.reduce((total, item) => {
     return total + (item.product.price * item.quantity);
   }, 0);
   
   const formattedTotal = `R$ ${(totalPrice / 100).toFixed(2).replace('.', ',')}`;
 
-  // Handle checkout (WhatsApp integration)
+  // Manipular checkout (integração com WhatsApp)
   const handleCheckout = () => {
     if (isEmpty) return;
     
@@ -40,26 +59,30 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
     
     // Limpa o carrinho e fecha o drawer após enviar
     clearCart();
-    closeCart();
+    onClose();
     
     console.log("Carrinho limpo e fechado após envio do pedido");
   };
 
   return (
     <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
+      {/* Backdrop com animação */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50" 
-        onClick={closeCart}
+        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300"
+        style={{ opacity: isOpen ? 1 : 0 }}
+        onClick={onClose}
       />
       
-      {/* Drawer */}
-      <div className="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-xl flex flex-col">
+      {/* Drawer com animação */}
+      <div 
+        className="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-xl flex flex-col transition-transform duration-300"
+        style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
+      >
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center">
           <h2 className="text-xl font-montserrat font-semibold">Carrinho de Compras</h2>
           <button 
-            onClick={closeCart}
+            onClick={onClose}
             className="p-2 hover:text-accent transition"
             aria-label="Close cart"
           >
@@ -132,7 +155,7 @@ const CartDrawer = ({ onClose }: CartDrawerProps) => {
             Finalizar Compra via WhatsApp
           </button>
           <button 
-            onClick={closeCart}
+            onClick={onClose}
             className="w-full bg-gray-200 text-gray-800 font-medium py-3 rounded-md hover:bg-gray-300 transition"
           >
             Continuar Comprando
