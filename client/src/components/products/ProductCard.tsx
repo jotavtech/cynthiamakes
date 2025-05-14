@@ -25,6 +25,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
         title: "Produto adicionado",
         description: `${product.name} foi adicionado ao carrinho.`,
       });
+      // Abre o carrinho após adicionar o produto
+      toggleCart();
     } catch (error) {
       toast({
         title: "Erro",
@@ -140,7 +142,7 @@ interface AddToCartButtonProps {
 }
 
 const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButtonProps) => {
-  const { addToCart } = useCart();
+  const { addToCart, toggleCart } = useCart();
   const { toast } = useToast();
   const [isAddingInternal, setIsAddingInternal] = useState(false);
   
@@ -159,6 +161,8 @@ const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButt
         title: "Produto adicionado",
         description: "O produto foi adicionado ao carrinho.",
       });
+      // Abre o carrinho após adicionar o produto
+      toggleCart();
     } catch (error) {
       toast({
         title: "Erro",
