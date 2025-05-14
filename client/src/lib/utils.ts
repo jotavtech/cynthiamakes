@@ -7,7 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 
 // Generate a random session ID for the cart
 export function generateSessionId() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  // Criar um ID mais consistente usando timestamp e random
+  const timestamp = new Date().getTime();
+  const randomPart = Math.random().toString(36).substring(2, 10);
+  return `cart_${timestamp}_${randomPart}`;
 }
 
 // Format WhatsApp message for cart checkout
