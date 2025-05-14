@@ -1,8 +1,8 @@
 import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
 import { formatWhatsAppMessage, generateWhatsAppURL } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/useCart";
 import { CartItemWithProduct } from "@shared/schema";
 
 interface CartDrawerProps {
@@ -11,17 +11,18 @@ interface CartDrawerProps {
 }
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
-  // Usar estado local para os itens
-  const [items, setItems] = useState<CartItemWithProduct[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const { cartItems, refreshCart } = useCart();
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // ID fixo da sessão para testes
   const sessionId = '99i47ng8zigy94xt079q59';
   
-  // Funções CRUD do carrinho
+  // Função para atualizar quantidade do item
   const updateQuantity = async (itemId: number, quantity: number) => {
     try {
+      setIsLoading(true);
       const response = await fetch(`/api/cart/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -30,94 +31,79 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       
       if (!response.ok) throw new Error('Falha ao atualizar quantidade');
       
-      // Atualizar o item localmente para feedback imediato
-      setItems(prev => prev.map(item => 
-        item.id === itemId ? { ...item, quantity } : item
-      ));
+      // Atualizar o carrinho
+      await refreshCart();
     } catch (err) {
       console.error('Erro ao atualizar quantidade:', err);
       setError('Não foi possível atualizar o item.');
+    } finally {
+      setIsLoading(false);
     }
   };
   
+  // Função para remover item do carrinho
   const removeItem = async (itemId: number) => {
     try {
+      setIsLoading(true);
       const response = await fetch(`/api/cart/${itemId}`, {
         method: 'DELETE'
       });
       
       if (!response.ok) throw new Error('Falha ao remover item');
       
-      // Remover o item localmente para feedback imediato
-      setItems(prev => prev.filter(item => item.id !== itemId));
+      // Atualizar o carrinho
+      await refreshCart();
     } catch (err) {
       console.error('Erro ao remover item:', err);
       setError('Não foi possível remover o item.');
+    } finally {
+      setIsLoading(false);
     }
   };
   
+  // Função para limpar o carrinho
   const clearCart = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch(`/api/cart/clear/${sessionId}`, {
         method: 'DELETE'
       });
       
       if (!response.ok) throw new Error('Falha ao limpar carrinho');
       
-      // Limpar itens localmente
-      setItems([]);
+      // Atualizar o carrinho
+      await refreshCart();
     } catch (err) {
       console.error('Erro ao limpar carrinho:', err);
       setError('Não foi possível limpar o carrinho.');
+    } finally {
+      setIsLoading(false);
     }
   };
   
-  // Efeito para carregar itens quando o drawer é aberto
+  // Efeito para buscar dados quando o drawer é aberto
   useEffect(() => {
     if (isOpen) {
-      // Função para carregar os itens do carrinho
-      const fetchItems = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-          console.log('Buscando itens do carrinho...');
-          const response = await fetch(`/api/cart/${sessionId}`);
-          
-          if (!response.ok) {
-            throw new Error(`Erro ao buscar carrinho: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log('Itens recebidos:', data);
-          setItems(data);
-        } catch (err) {
-          console.error('Erro ao buscar itens do carrinho:', err);
-          setError('Não foi possível carregar os itens do carrinho.');
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      fetchItems();
+      refreshCart();
     }
-  }, [isOpen]);
+  }, [isOpen, refreshCart]);
   
   // Calcular total do carrinho
-  const total = items.reduce((sum, item) => 
-    sum + (item.product.price * item.quantity), 0);
+  const total = cartItems.reduce((acc, item) => 
+    acc + (item.product.price * item.quantity), 0);
   
   const formattedTotal = `R$ ${(total / 100).toFixed(2).replace('.', ',')}`;
   
   // Manipular checkout (integração com WhatsApp)
   const handleCheckout = () => {
-    if (items.length === 0) return;
+    if (cartItems.length === 0) return;
     
     try {
       // Número de telefone da Cynthia Makeup (conforme solicitado)
       const PHONE_NUMBER = "83993187473";
       
       // Criar mensagem para WhatsApp
-      const message = formatWhatsAppMessage(items);
+      const message = formatWhatsAppMessage(cartItems);
       
       // Gerar URL do WhatsApp
       const whatsappUrl = generateWhatsAppURL(PHONE_NUMBER, message);
@@ -134,7 +120,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     }
   };
   
-  // Determinar classe CSS para animação do drawer
+  // Determinar classes CSS para animação
   const drawerClasses = `absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-xl flex flex-col transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`;
   
   return (
@@ -161,7 +147,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
         
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center h-32">
               <div className="animate-spin h-8 w-8 border-4 border-accent border-t-transparent rounded-full"></div>
             </div>
@@ -169,14 +155,14 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
             <div className="text-center text-red-500 py-4">
               {error}
             </div>
-          ) : items.length === 0 ? (
+          ) : cartItems.length === 0 ? (
             <div className="text-center text-gray-500 py-8">
               <ShoppingBag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
               <p>Seu carrinho está vazio</p>
               <p className="mt-2 text-sm">Adicione produtos para continuar comprando</p>
             </div>
           ) : (
-            items.map(item => (
+            cartItems.map(item => (
               <div key={item.id} className="flex border-b pb-4">
                 <div className="w-20 h-20 rounded-md overflow-hidden">
                   <img 
@@ -226,7 +212,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
           </div>
           <button 
             onClick={handleCheckout}
-            disabled={items.length === 0}
+            disabled={cartItems.length === 0}
             className="w-full bg-accent text-white font-medium py-3 rounded-md hover:bg-opacity-90 transition mb-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Finalizar Compra via WhatsApp

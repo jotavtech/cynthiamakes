@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddToCartButtonProps {
@@ -14,6 +13,7 @@ interface AddToCartButtonProps {
   buttonText?: string;
   quantity?: number;
   onSuccess?: () => void;
+  openCartDrawer: () => void;
 }
 
 export function AddToCartButton({
@@ -25,11 +25,14 @@ export function AddToCartButton({
   showIcon = true,
   buttonText = "Adicionar ao Carrinho",
   quantity = 1,
-  onSuccess
+  onSuccess,
+  openCartDrawer
 }: AddToCartButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { addToCartAndOpen } = useCart();
   const { toast } = useToast();
+  
+  // ID de sessão fixo para consistência
+  const sessionId = '99i47ng8zigy94xt079q59';
 
   const handleAddToCart = async () => {
     if (isLoading) return;
@@ -38,20 +41,49 @@ export function AddToCartButton({
     console.log(`[AddToCartButton] Adicionando produto ${productId} ao carrinho`);
     
     try {
-      const success = await addToCartAndOpen(productId, quantity);
+      // Verificar se o item já existe no carrinho
+      const cartResponse = await fetch(`/api/cart/${sessionId}`);
+      const cartItems = await cartResponse.json();
+      const existingItem = cartItems.find((item: { productId: number }) => item.productId === productId);
       
-      if (success) {
-        const productLabel = productName ? productName : `Produto #${productId}`;
-        toast({
-          title: "Produto adicionado",
-          description: `${productLabel} foi adicionado ao carrinho.`,
+      let response;
+      
+      if (existingItem) {
+        // Se o item já existe, atualizar a quantidade
+        const newQuantity = existingItem.quantity + quantity;
+        response = await fetch(`/api/cart/${existingItem.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: newQuantity })
         });
-        
-        if (onSuccess) {
-          onSuccess();
-        }
       } else {
+        // Se o item não existe, adicioná-lo
+        response = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId,
+            quantity,
+            sessionId
+          })
+        });
+      }
+      
+      if (!response.ok) {
         throw new Error("Falha ao adicionar produto");
+      }
+      
+      const productLabel = productName ? productName : `Produto #${productId}`;
+      toast({
+        title: "Produto adicionado",
+        description: `${productLabel} foi adicionado ao carrinho.`,
+      });
+      
+      // Abrir o drawer do carrinho
+      openCartDrawer();
+      
+      if (onSuccess) {
+        onSuccess();
       }
     } catch (error) {
       console.error(`[AddToCartButton] Erro ao adicionar produto ${productId}:`, error);

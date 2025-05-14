@@ -1,22 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { 
-  Search, 
-  ShoppingBag, 
-  Menu, 
-  X,
-  Settings
-} from "lucide-react";
+import { Search, ShoppingBag, Menu, X, Settings } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 
-interface HeaderProps {
-  openCart: () => void;
-  toggleCart?: () => void;
-}
-
-const Header = ({ openCart }: HeaderProps) => {
+const Header = () => {
   const [location] = useLocation();
-  const { cartItems } = useCart();
+  const { cartItems, openCart } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 

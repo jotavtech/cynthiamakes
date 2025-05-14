@@ -11,7 +11,23 @@ import CartPage from "@/pages/CartPage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext } from "react";
+import { CartItemWithProduct } from "@shared/schema";
+
+// Criar contexto para o carrinho
+export const CartContext = createContext<{
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  cartItems: CartItemWithProduct[];
+  refreshCart: () => Promise<void>;
+}>({
+  isCartOpen: false,
+  openCart: () => {},
+  closeCart: () => {},
+  cartItems: [],
+  refreshCart: async () => {},
+});
 
 function Router() {
   return (
@@ -30,25 +46,63 @@ function Router() {
 function App() {
   // Estado do carrinho
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
+  
+  // ID de sessão fixo
+  const sessionId = '99i47ng8zigy94xt079q59';
+  
+  // Função para buscar itens do carrinho
+  const refreshCart = async () => {
+    try {
+      console.log("[App] Buscando itens do carrinho...");
+      const response = await fetch(`/api/cart/${sessionId}`);
+      if (!response.ok) throw new Error("Falha ao buscar carrinho");
+      
+      const data = await response.json();
+      console.log("[App] Itens recebidos:", data);
+      setCartItems(data);
+    } catch (error) {
+      console.error("[App] Erro ao buscar itens:", error);
+    }
+  };
+  
+  // Buscar itens do carrinho na montagem do componente
+  useEffect(() => {
+    refreshCart();
+  }, []);
+  
+  // Buscar itens quando o carrinho é aberto
+  useEffect(() => {
+    if (isCartOpen) {
+      refreshCart();
+    }
+  }, [isCartOpen]);
   
   // Funções do carrinho
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
-  const toggleCart = () => setIsCartOpen(!isCartOpen);
 
   return (
-    <TooltipProvider>
-      <Header openCart={openCart} toggleCart={toggleCart} />
-      
-      <main className="min-h-screen">
-        <Router />
-      </main>
-      
-      <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
-      
-      <Footer />
-      <Toaster />
-    </TooltipProvider>
+    <CartContext.Provider value={{ 
+      isCartOpen, 
+      openCart, 
+      closeCart, 
+      cartItems,
+      refreshCart
+    }}>
+      <TooltipProvider>
+        <Header />
+        
+        <main className="min-h-screen">
+          <Router />
+        </main>
+        
+        <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
+        
+        <Footer />
+        <Toaster />
+      </TooltipProvider>
+    </CartContext.Provider>
   );
 }
 
