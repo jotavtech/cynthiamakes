@@ -70,12 +70,12 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/#sobre" className="hover:text-secondary transition">
+                <Link href="/sobre" className="hover:text-secondary transition">
                   Sobre
                 </Link>
               </li>
               <li>
-                <Link href="/#contato" className="hover:text-secondary transition">
+                <Link href="/contato" className="hover:text-secondary transition">
                   Contato
                 </Link>
               </li>
@@ -120,7 +120,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li className="flex items-center">
                 <Phone className="h-5 w-5 mr-2" />
-                <span>(99) 99318-7473</span>
+                <span>(83) 99318-7473</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-5 w-5 mr-2" />
