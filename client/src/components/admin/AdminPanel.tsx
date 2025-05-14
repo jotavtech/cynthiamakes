@@ -9,7 +9,14 @@ import {
   Package,
   LayoutDashboard,
   LogOut,
-  Search
+  Search,
+  Boxes,
+  AlertTriangle,
+  BarChart3,
+  PlusCircle,
+  MinusCircle,
+  Truck,
+  History
 } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
 import ProductForm from "./ProductForm";
@@ -38,9 +45,16 @@ const AdminPanel = () => {
   const [selectedProduct, setSelectedProduct] = useState<DisplayProduct | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("products");
+  const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
+  const [stockAction, setStockAction] = useState<"add" | "remove" | null>(null);
 
   const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],
+  });
+  
+  const { data: lowStockProducts, isLoading: isLoadingLowStock } = useQuery<DisplayProduct[]>({
+    queryKey: ["/api/inventory/low-stock"],
+    enabled: activeTab === "inventory"
   });
   
   const filteredProducts = products?.filter(product => 
@@ -111,6 +125,42 @@ const AdminPanel = () => {
       });
     }
   };
+  
+  const handleAdjustStock = async (data: { quantity: number, notes: string }) => {
+    if (!selectedProduct || !stockAction) return;
+    
+    try {
+      // Converter quantidade para positivo ou negativo dependendo da ação
+      const stockChange = stockAction === "add" ? 
+        Math.abs(data.quantity) : 
+        -Math.abs(data.quantity);
+      
+      // Determinar o tipo de transação
+      const transactionType = stockAction === "add" ? "purchase" : "adjustment";
+      
+      await apiRequest("POST", "/api/inventory/update-stock", {
+        productId: selectedProduct.id,
+        stockChange,
+        transactionType,
+        notes: data.notes || ""
+      });
+      
+      setIsAdjustStockOpen(false);
+      refetch();
+      toast({
+        title: "Sucesso",
+        description: stockAction === "add" ? 
+          "Estoque adicionado com sucesso!" : 
+          "Estoque reduzido com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao ajustar o estoque. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="p-4 md:p-6">
@@ -125,12 +175,15 @@ const AdminPanel = () => {
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-2 md:w-[400px] mb-6">
+        <TabsList className="grid grid-cols-3 md:w-[600px] mb-6">
           <TabsTrigger value="overview">
             <LayoutDashboard className="mr-2 h-4 w-4" /> Visão Geral
           </TabsTrigger>
           <TabsTrigger value="products">
             <Package className="mr-2 h-4 w-4" /> Produtos
+          </TabsTrigger>
+          <TabsTrigger value="inventory">
+            <Boxes className="mr-2 h-4 w-4" /> Estoque
           </TabsTrigger>
         </TabsList>
         
