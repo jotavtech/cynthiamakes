@@ -26,7 +26,7 @@ const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) =
         title: "Produto adicionado",
         description: `${product.name} foi adicionado ao carrinho.`,
       });
-      onClose();
+      // Don't close the modal immediately, just show the success message
     } catch (error) {
       toast({
         title: "Erro",
