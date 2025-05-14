@@ -69,8 +69,8 @@ const Header = () => {
               <Search className="h-6 w-6" />
             </button>
             
-            <Link 
-              href="/carrinho"
+            <button 
+              onClick={toggleCart}
               className="p-2 hover:text-accent transition relative"
               aria-label="Shopping cart"
             >
@@ -80,7 +80,7 @@ const Header = () => {
                   {totalItems}
                 </span>
               )}
-            </Link>
+            </button>
             
             <Link 
               href="/admin" 
