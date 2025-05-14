@@ -17,23 +17,30 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   const handleAddToCart = async () => {
     setIsAdding(true);
+    console.log(`Tentando adicionar produto ${product.id} (${product.name}) ao carrinho`);
+    
     try {
       // Adiciona o produto ao carrinho
       await addToCart(product.id);
+      
       // Notifica o usuário
       toast({
         title: "Produto adicionado",
         description: `${product.name} foi adicionado ao carrinho.`,
       });
+      
+      console.log(`Produto ${product.id} adicionado com sucesso, abrindo o carrinho`);
+      
       // Abre o carrinho após adicionar o produto
       toggleCart();
     } catch (error) {
+      console.error(`Erro ao adicionar produto ${product.id} ao carrinho:`, error);
+      
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o produto ao carrinho.",
         variant: "destructive",
       });
-      console.error("Erro ao adicionar ao carrinho:", error);
     } finally {
       setIsAdding(false);
     }
@@ -150,20 +157,30 @@ const AddToCartButton = ({ productId, onClick, isAdding = false }: AddToCartButt
   
   const handleClick = async () => {
     if (onClick) {
+      console.log("Delegando adição ao carrinho para o componente pai");
       onClick();
       return;
     }
     
+    console.log(`AddToCartButton: Tentando adicionar produto ${productId} ao carrinho`);
     setIsAddingInternal(true);
+    
     try {
       await addToCart(productId);
+      
+      console.log(`AddToCartButton: Produto ${productId} adicionado com sucesso`);
+      
       toast({
         title: "Produto adicionado",
         description: "O produto foi adicionado ao carrinho.",
       });
+      
       // Abre o carrinho após adicionar o produto
+      console.log("Abrindo o carrinho após adicionar produto");
       toggleCart();
     } catch (error) {
+      console.error(`AddToCartButton: Erro ao adicionar produto ${productId} ao carrinho:`, error);
+      
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o produto ao carrinho.",

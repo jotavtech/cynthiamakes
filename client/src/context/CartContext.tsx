@@ -44,11 +44,14 @@ export const CartProvider = ({ children }: CartProviderProps) => {
 
   // Initialize session ID
   useEffect(() => {
+    console.log("Initializing session ID");
     const storedSessionId = localStorage.getItem("cartSessionId");
     if (storedSessionId) {
+      console.log("Using existing session ID:", storedSessionId);
       setSessionId(storedSessionId);
     } else {
       const newSessionId = generateSessionId();
+      console.log("Created new session ID:", newSessionId);
       localStorage.setItem("cartSessionId", newSessionId);
       setSessionId(newSessionId);
     }
@@ -57,19 +60,29 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   // Fetch cart items when session ID is available
   useEffect(() => {
     if (sessionId) {
+      console.log("Session ID is available, fetching cart items:", sessionId);
       fetchCartItems();
     }
   }, [sessionId]);
 
   const fetchCartItems = async () => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      console.log("No session ID available, can't fetch cart items");
+      return;
+    }
     
+    console.log("Fetching cart items for session:", sessionId);
     setIsLoading(true);
     try {
+      // Usar apiRequest para garantir que estamos enviando cookies e headers corretos
       const response = await fetch(`/api/cart/${sessionId}`);
-      if (!response.ok) throw new Error("Failed to fetch cart");
+      if (!response.ok) {
+        console.error("Failed to fetch cart:", response.status, response.statusText);
+        throw new Error("Failed to fetch cart");
+      }
       
       const data = await response.json();
+      console.log("Cart items fetched:", data);
       setCartItems(data);
     } catch (error) {
       console.error("Error fetching cart:", error);
@@ -84,16 +97,39 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const addToCart = async (productId: number, quantity = 1) => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      console.error("No session ID available, can't add to cart");
+      return;
+    }
+    
+    console.log(`Adding product ${productId} to cart with quantity ${quantity}`);
     
     try {
-      await apiRequest("POST", "/api/cart", {
-        productId,
-        quantity,
-        sessionId,
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          quantity,
+          sessionId,
+        }),
       });
       
+      if (!response.ok) {
+        console.error("Failed to add to cart:", response.status, response.statusText);
+        throw new Error("Failed to add to cart");
+      }
+      
+      const result = await response.json();
+      console.log("Product added to cart:", result);
+      
+      // Fetch updated cart items
       await fetchCartItems();
+      
+      // Depois de adicionar o produto, talvez abrir o carrinho automaticamente
+      setIsCartOpen(true);
     } catch (error) {
       console.error("Error adding to cart:", error);
       throw error;
