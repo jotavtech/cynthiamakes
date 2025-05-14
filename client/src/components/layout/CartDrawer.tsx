@@ -2,7 +2,6 @@ import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { formatWhatsAppMessage, generateWhatsAppURL } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useCart } from "@/hooks/useCart";
 import { CartItemWithProduct } from "@shared/schema";
 
 interface CartDrawerProps {
@@ -12,12 +11,36 @@ interface CartDrawerProps {
 
 const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   const { toast } = useToast();
-  const { cartItems, refreshCart } = useCart();
+  const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // ID fixo da sessão para testes
   const sessionId = '99i47ng8zigy94xt079q59';
+  
+  // Função para buscar os itens do carrinho
+  const fetchCartItems = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log("Buscando itens do carrinho no drawer para a sessão:", sessionId);
+      const response = await fetch(`/api/cart/${sessionId}`);
+      
+      if (!response.ok) {
+        throw new Error("Falha ao buscar itens do carrinho");
+      }
+      
+      const data = await response.json();
+      console.log("Itens recebidos no drawer:", data);
+      setCartItems(data);
+    } catch (err) {
+      console.error("Erro ao buscar itens do carrinho:", err);
+      setError("Não foi possível carregar os itens do carrinho");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Função para atualizar quantidade do item
   const updateQuantity = async (itemId: number, quantity: number) => {
@@ -32,7 +55,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       if (!response.ok) throw new Error('Falha ao atualizar quantidade');
       
       // Atualizar o carrinho
-      await refreshCart();
+      await fetchCartItems();
     } catch (err) {
       console.error('Erro ao atualizar quantidade:', err);
       setError('Não foi possível atualizar o item.');
@@ -52,7 +75,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       if (!response.ok) throw new Error('Falha ao remover item');
       
       // Atualizar o carrinho
-      await refreshCart();
+      await fetchCartItems();
     } catch (err) {
       console.error('Erro ao remover item:', err);
       setError('Não foi possível remover o item.');
@@ -72,7 +95,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       if (!response.ok) throw new Error('Falha ao limpar carrinho');
       
       // Atualizar o carrinho
-      await refreshCart();
+      setCartItems([]);
     } catch (err) {
       console.error('Erro ao limpar carrinho:', err);
       setError('Não foi possível limpar o carrinho.');
@@ -85,11 +108,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   useEffect(() => {
     if (isOpen) {
       console.log("CartDrawer aberto, buscando itens do carrinho...");
-      refreshCart().then(() => {
-        console.log("Itens do carrinho atualizados no drawer");
-      });
+      fetchCartItems();
     }
-  }, [isOpen, refreshCart]);
+  }, [isOpen]);
   
   // Calcular total do carrinho
   const total = cartItems.reduce((acc, item) => 
@@ -117,6 +138,11 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       // Limpar carrinho após checkout
       clearCart();
       onClose();
+      
+      toast({
+        title: "Pedido enviado!",
+        description: "Enviamos seu pedido para o WhatsApp da Cynthia Makeup.",
+      });
     } catch (err) {
       console.error('Erro ao enviar para WhatsApp:', err);
       setError('Não foi possível finalizar a compra.');
@@ -138,7 +164,7 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
       <div className={drawerClasses}>
         {/* Header */}
         <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-montserrat font-semibold">Carrinho de Compras</h2>
+          <h2 className="text-xl font-montserrat font-semibold">Seu Carrinho</h2>
           <button 
             onClick={onClose}
             className="p-2 hover:text-accent transition"
@@ -165,45 +191,47 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
               <p className="mt-2 text-sm">Adicione produtos para continuar comprando</p>
             </div>
           ) : (
-            cartItems.map(item => (
-              <div key={item.id} className="flex border-b pb-4 mb-4">
-                <div className="w-20 h-20 rounded-md overflow-hidden border">
-                  <img 
-                    src={item.product.imageUrl} 
-                    alt={item.product.name} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="ml-4 flex-1">
-                  <h4 className="font-montserrat font-medium text-primary">{item.product.name}</h4>
-                  <div className="text-accent font-medium mt-1">{item.product.formattedPrice}</div>
-                  <div className="flex items-center mt-3">
-                    <button 
-                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                      className="p-1 border rounded-md hover:bg-gray-100 transition"
-                      aria-label="Diminuir quantidade"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="mx-3 font-medium">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="p-1 border rounded-md hover:bg-gray-100 transition"
-                      aria-label="Aumentar quantidade"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                    <button 
-                      onClick={() => removeItem(item.id)}
-                      className="ml-auto text-red-500 hover:text-red-700 transition"
-                      aria-label="Remover item"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+            <div className="space-y-4">
+              {cartItems.map(item => (
+                <div key={item.id} className="flex border-b pb-4 mb-4">
+                  <div className="w-20 h-20 rounded-md overflow-hidden border">
+                    <img 
+                      src={item.product.imageUrl} 
+                      alt={item.product.name} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <h4 className="font-montserrat font-medium text-primary">{item.product.name}</h4>
+                    <div className="text-accent font-medium mt-1">{item.product.formattedPrice}</div>
+                    <div className="flex items-center mt-3">
+                      <button 
+                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                        className="p-1 border rounded-md hover:bg-gray-100 transition"
+                        aria-label="Diminuir quantidade"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="mx-3 font-medium">{item.quantity}</span>
+                      <button 
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="p-1 border rounded-md hover:bg-gray-100 transition"
+                        aria-label="Aumentar quantidade"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={() => removeItem(item.id)}
+                        className="ml-auto text-red-500 hover:text-red-700 transition"
+                        aria-label="Remover item"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
         
