@@ -78,14 +78,14 @@ export const CartProvider = ({ children }: CartProviderProps) => {
   };
 
   const addToCart = async (productId: number, quantity = 1) => {
-    console.log(`Adicionando produto ${productId} ao carrinho com quantidade ${quantity} usando SESSION_ID ${SESSION_ID}`);
+    console.log(`[CartContext] Adicionando produto ${productId} ao carrinho com quantidade ${quantity}`);
     
     try {
       // Primeiro vamos verificar se o produto já existe no carrinho
       const existingItem = cartItems.find(item => item.productId === productId);
       
       if (existingItem) {
-        console.log(`Produto ${productId} já existe no carrinho com ID ${existingItem.id}, atualizando quantidade`);
+        console.log(`[CartContext] Produto ${productId} já existe no carrinho com ID ${existingItem.id}, atualizando quantidade`);
         
         // Atualizar a quantidade em vez de adicionar novamente
         const newQuantity = existingItem.quantity + quantity;
@@ -99,15 +99,15 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         });
         
         if (!updateResponse.ok) {
-          console.error("Falha ao atualizar item no carrinho:", updateResponse.status, updateResponse.statusText);
+          console.error("[CartContext] Falha ao atualizar item no carrinho:", updateResponse.status, updateResponse.statusText);
           throw new Error("Falha ao atualizar item no carrinho");
         }
         
         const updateResult = await updateResponse.json();
-        console.log("Quantidade do produto atualizada:", updateResult);
+        console.log("[CartContext] Quantidade do produto atualizada:", updateResult);
       } else {
         // Adicionar novo item ao carrinho
-        console.log(`Adicionando novo produto ${productId} ao carrinho`);
+        console.log(`[CartContext] Adicionando novo produto ${productId} ao carrinho`);
         
         const addResponse = await fetch("/api/cart", {
           method: "POST",
@@ -122,23 +122,22 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         });
         
         if (!addResponse.ok) {
-          console.error("Falha ao adicionar ao carrinho:", addResponse.status, addResponse.statusText);
+          console.error("[CartContext] Falha ao adicionar ao carrinho:", addResponse.status, addResponse.statusText);
           throw new Error("Falha ao adicionar ao carrinho");
         }
         
         const addResult = await addResponse.json();
-        console.log("Produto adicionado ao carrinho:", addResult);
+        console.log("[CartContext] Produto adicionado ao carrinho:", addResult);
       }
       
       // Buscar itens atualizados do carrinho
-      console.log("Buscando itens atualizados do carrinho");
+      console.log("[CartContext] Buscando itens atualizados do carrinho");
       await fetchCartItems();
       
-      // Abrir o carrinho após adicionar o produto
-      console.log("Abrindo o carrinho automaticamente");
-      setIsCartOpen(true);
+      // Não abrimos o carrinho aqui, deixamos essa responsabilidade para o hook useCart
+      // para evitar conflitos entre estados
     } catch (error) {
-      console.error("Erro ao adicionar ao carrinho:", error);
+      console.error("[CartContext] Erro ao adicionar ao carrinho:", error);
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o produto ao carrinho.",

@@ -12,8 +12,15 @@ export const useCart = () => {
   const addToCartAndOpen = async (productId: number, quantity: number = 1) => {
     console.log(`[useCart] Adicionando produto ${productId} ao carrinho e abrindo o drawer`);
     try {
+      // Adicionar um pequeno atraso antes de abrir o carrinho para garantir que o servidor tenha tempo
+      // de processar a adição e a UI seja atualizada com os novos dados
       await context.addToCart(productId, quantity);
-      context.setIsCartOpen(true);
+      
+      // Aguardar um momento para garantir que os dados sejam atualizados
+      setTimeout(() => {
+        context.setIsCartOpen(true);
+      }, 100);
+      
       return true;
     } catch (error) {
       console.error("[useCart] Erro ao adicionar produto:", error);

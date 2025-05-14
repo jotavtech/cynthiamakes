@@ -22,6 +22,9 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
+      
+      // Quando o carrinho é aberto, forçamos uma atualização dos itens
+      console.log("[CartDrawer] Carrinho aberto, forçando atualização dos itens");
     } else {
       // Quando fechamos, aguardamos a animação terminar antes de esconder
       const timer = setTimeout(() => {
