@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Switch, Route } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,7 @@ import CartPage from "@/pages/CartPage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
+import { useCart } from "@/hooks/useCart";
 
 function Router() {
   return (
@@ -28,12 +28,8 @@ function Router() {
 }
 
 function App() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  
-  const toggleCart = () => {
-    console.log("Toggling cart in App.tsx from", isCartOpen, "to", !isCartOpen);
-    setIsCartOpen(!isCartOpen);
-  };
+  // Usamos o hook useCart para obter o estado do carrinho do contexto global
+  const { isCartOpen, toggleCart } = useCart();
 
   return (
     <TooltipProvider>
@@ -43,7 +39,7 @@ function App() {
         <Router />
       </main>
       
-      {isCartOpen && <CartDrawer onClose={() => setIsCartOpen(false)} />}
+      {isCartOpen && <CartDrawer onClose={toggleCart} />}
       
       <Footer />
       <Toaster />
