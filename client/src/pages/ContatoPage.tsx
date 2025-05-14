@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { generateWhatsAppURL } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -29,6 +30,9 @@ type FormValues = z.infer<typeof formSchema>;
 const ContatoPage = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Número de telefone da Cynthia Makeup (conforme solicitado)
+  const PHONE_NUMBER = "83993187473";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -43,16 +47,33 @@ const ContatoPage = () => {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Simula envio - em produção, isso seria uma chamada API real
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Formatar a mensagem para o WhatsApp
+      const message = `
+*Contato pelo site Cynthia Makeup*
+
+*Nome:* ${values.nome}
+*Email:* ${values.email}
+*Telefone:* ${values.telefone}
+
+*Mensagem:*
+${values.mensagem}
+      `;
+      
+      console.log("Enviando mensagem para WhatsApp:", message);
+      
+      // Gerar URL do WhatsApp com a mensagem e abrir em nova aba
+      const whatsappUrl = generateWhatsAppURL(PHONE_NUMBER, message);
+      window.open(whatsappUrl, '_blank');
       
       toast({
         title: "Mensagem enviada!",
-        description: "Agradecemos seu contato. Responderemos em breve.",
+        description: "Sua mensagem foi enviada para o WhatsApp da Cynthia Makeup.",
       });
       
+      // Resetar o formulário após envio
       form.reset();
     } catch (error) {
+      console.error("Erro ao enviar para o WhatsApp:", error);
       toast({
         title: "Erro ao enviar mensagem",
         description: "Por favor, tente novamente mais tarde.",
