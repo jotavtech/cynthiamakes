@@ -206,6 +206,22 @@ const AdminPanel = () => {
   const [historySortDirection, setHistorySortDirection] = useState<"asc" | "desc">("desc");
   const [saleProducts, setSaleProducts] = useState<{product: DisplayProduct, quantity: number}[]>([]);
   
+  // Inicializar produtos quando o modal de adicionar venda é aberto
+  useEffect(() => {
+    if (isAddSaleOpen && products && products.length > 0 && saleProducts.length === 0) {
+      // Inicializa com produtos de exemplo
+      const initialProducts = [];
+      if (products.length > 0) initialProducts.push({ product: products[0], quantity: 1 });
+      if (products.length > 1) initialProducts.push({ product: products[1], quantity: 1 });
+      setSaleProducts(initialProducts);
+    }
+    
+    // Limpar produtos quando o modal for fechado
+    if (!isAddSaleOpen) {
+      setSaleProducts([]);
+    }
+  }, [isAddSaleOpen, products]);
+  
   // Função para remover produto da venda
   const removeProductFromSale = (index: number) => {
     setSaleProducts(prev => prev.filter((_, i) => i !== index));
