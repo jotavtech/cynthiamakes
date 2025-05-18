@@ -1390,7 +1390,7 @@ const AdminPanel = () => {
 
       {/* Modal para visualizar detalhes do pedido */}
       <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalhes do Pedido #{selectedOrder?.id}</DialogTitle>
             <DialogDescription>
@@ -1398,33 +1398,7 @@ const AdminPanel = () => {
             </DialogDescription>
           </DialogHeader>
           
-          {/* Botões de navegação para visualização de pedido */}
-          <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-2">
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o topo do modal"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            </Button>
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o final do modal"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </Button>
-          </div>
+
           {selectedOrder && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1514,41 +1488,13 @@ const AdminPanel = () => {
       
       {/* Modal para adicionar venda */}
       <Dialog open={isAddSaleOpen} onOpenChange={setIsAddSaleOpen}>
-        <DialogContent className="sm:max-w-3xl">
+        <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Registrar Nova Venda</DialogTitle>
             <DialogDescription>
               Adicione os detalhes da venda para registrar no sistema.
             </DialogDescription>
           </DialogHeader>
-          
-          {/* Botões de navegação dentro do modal */}
-          <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-2">
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o topo do formulário"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            </Button>
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o final do formulário"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </Button>
-          </div>
           
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
