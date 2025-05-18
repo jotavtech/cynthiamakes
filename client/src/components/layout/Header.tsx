@@ -102,6 +102,16 @@ const Header = () => {
                 {link.name}
               </Link>
             ))}
+            {/* Admin Link no Menu Mobile */}
+            <Link 
+              href="/admin" 
+              className="flex items-center py-2 font-medium text-primary hover:text-accent transition"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Admin area"
+            >
+              <Settings className="h-5 w-5 mr-2" />
+              <span>Área Administrativa</span>
+            </Link>
           </div>
         </div>
       )}
