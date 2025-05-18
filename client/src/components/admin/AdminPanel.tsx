@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Loader2, 
@@ -193,6 +193,10 @@ const AdminPanel = () => {
   const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
   const [stockAction, setStockAction] = useState<"add" | "remove" | null>(null);
   
+  const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
+    queryKey: ["/api/products"],
+  });
+  
   // Estados para as novas funcionalidades de vendas e histórico
   const [salesSearchTerm, setSalesSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -200,10 +204,32 @@ const AdminPanel = () => {
   const [isAddSaleOpen, setIsAddSaleOpen] = useState(false);
   const [historySortField, setHistorySortField] = useState("month");
   const [historySortDirection, setHistorySortDirection] = useState<"asc" | "desc">("desc");
-
-  const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
-    queryKey: ["/api/products"],
-  });
+  const [saleProducts, setSaleProducts] = useState<{product: DisplayProduct, quantity: number}[]>([]);
+  
+  // Função para remover produto da venda
+  const removeProductFromSale = (index: number) => {
+    setSaleProducts(prev => prev.filter((_, i) => i !== index));
+    toast({
+      title: "Produto removido",
+      description: "O produto foi removido da venda.",
+    });
+  };
+  
+  // Função para adicionar produto à venda
+  const addProductToSale = () => {
+    if (products && products.length > 0) {
+      setSaleProducts(prev => [...prev, { product: products[0], quantity: 1 }]);
+    }
+  };
+  
+  // Função para atualizar a quantidade de um produto
+  const updateProductQuantity = (index: number, quantity: number) => {
+    setSaleProducts(prev => 
+      prev.map((item, i) => 
+        i === index ? { ...item, quantity: Math.max(1, quantity) } : item
+      )
+    );
+  };
   
   const { data: lowStockProducts, isLoading: isLoadingLowStock } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/inventory/low-stock"],
@@ -1519,7 +1545,13 @@ const AdminPanel = () => {
             <div className="space-y-2 mt-4">
               <div className="flex justify-between items-center">
                 <Label>Produtos</Label>
-                <Button variant="outline" type="button" size="sm" className="h-8">
+                <Button 
+                  variant="outline" 
+                  type="button" 
+                  size="sm" 
+                  className="h-8"
+                  onClick={addProductToSale}
+                >
                   <Plus className="h-4 w-4 mr-1" /> Adicionar Produto
                 </Button>
               </div>
@@ -1537,21 +1569,29 @@ const AdminPanel = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {products && products.slice(0, 2).map((product, index) => (
+                      {saleProducts.map((item, index) => (
                         <tr key={index} className="border-b">
-                          <td className="p-2 text-sm">{product.name}</td>
-                          <td className="p-2 text-sm text-center">{product.formattedPrice}</td>
+                          <td className="p-2 text-sm">{item.product.name}</td>
+                          <td className="p-2 text-sm text-center">{item.product.formattedPrice}</td>
                           <td className="p-2 text-center">
                             <Input 
                               type="number" 
-                              defaultValue="1" 
+                              value={item.quantity}
                               min="1" 
                               className="h-8 w-16 text-center mx-auto"
+                              onChange={(e) => updateProductQuantity(index, parseInt(e.target.value) || 1)}
                             />
                           </td>
-                          <td className="p-2 text-sm text-right">{product.formattedPrice}</td>
+                          <td className="p-2 text-sm text-right">
+                            {`R$ ${((item.product.price * item.quantity) / 100).toFixed(2).replace('.', ',')}`}
+                          </td>
                           <td className="p-2">
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => removeProductFromSale(index)}
+                            >
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
                           </td>
@@ -1560,8 +1600,8 @@ const AdminPanel = () => {
                       <tr className="bg-muted/50">
                         <td colSpan={3} className="p-2 text-sm text-right font-medium">Total</td>
                         <td className="p-2 text-sm text-right font-bold">
-                          {products && `R$ ${(products.slice(0, 2).reduce((acc, product) => {
-                            return acc + product.price;
+                          {`R$ ${(saleProducts.reduce((acc, item) => {
+                            return acc + (item.product.price * item.quantity);
                           }, 0) / 100).toFixed(2).replace('.', ',')}`}
                         </td>
                         <td></td>
