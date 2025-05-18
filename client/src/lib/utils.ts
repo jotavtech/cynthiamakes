@@ -37,34 +37,49 @@ export function generateWhatsAppURL(phone: string, message: string): string {
 export function formatWhatsAppMessage(cartItems: any[]) {
   if (cartItems.length === 0) return '';
   
-  let message = 'Olá! Gostaria de fazer um pedido na Cynthia Makeup:\n\n';
+  // Obter data e hora atuais para o pedido
+  const currentDate = new Date();
+  const formattedDate = `${currentDate.getDate().toString().padStart(2, '0')}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()} às ${currentDate.getHours().toString().padStart(2, '0')}:${currentDate.getMinutes().toString().padStart(2, '0')}`;
+  
+  // Cabeçalho da mensagem com informações sobre o pedido
+  let message = `*📋 PEDIDO - CYNTHIA MAKEUP*\n`;
+  message += `*Data:* ${formattedDate}\n\n`;
+  message += `Olá! Gostaria de fazer o seguinte pedido:\n\n`;
   
   let total = 0;
-  let itemNumber = 1;
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   
-  cartItems.forEach(item => {
+  // Lista detalhada de todos os produtos
+  message += `*✨ ITENS DO PEDIDO:*\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  
+  cartItems.forEach((item, index) => {
     const subtotal = item.product.price * item.quantity / 100;
     total += subtotal;
     
-    message += `*Item ${itemNumber}: ${item.product.name}*\n`;
-    if (item.product.brand) {
-      message += `Marca: ${item.product.brand}\n`;
-    }
-    if (item.product.category) {
-      message += `Categoria: ${item.product.category}\n`;
-    }
-    message += `Quantidade: ${item.quantity} unidade${item.quantity > 1 ? 's' : ''}\n`;
-    message += `Preço unitário: ${item.product.formattedPrice}\n`;
-    message += `Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n\n`;
-    
-    itemNumber++;
+    message += `*${index + 1}. ${item.product.name}*\n`;
+    message += `• Categoria: ${item.product.category || 'N/A'}\n`;
+    message += `• Marca: ${item.product.brand || 'N/A'}\n`;
+    message += `• Valor unitário: ${item.product.formattedPrice}\n`;
+    message += `• Quantidade: ${item.quantity} unidade${item.quantity > 1 ? 's' : ''}\n`;
+    message += `• Subtotal: R$ ${subtotal.toFixed(2).replace('.', ',')}\n`;
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━\n`;
   });
   
-  message += `*Resumo do Pedido:*\n`;
-  message += `Quantidade de itens: ${cartItems.length}\n`;
-  message += `Quantidade total de produtos: ${cartItems.reduce((sum, item) => sum + item.quantity, 0)}\n`;
-  message += `*Valor Total: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
-  message += `Por favor, confirme meu pedido e informe as opções de pagamento. Obrigado(a)!`;
+  // Resumo financeiro do pedido
+  message += `\n*💰 RESUMO DO PEDIDO:*\n`;
+  message += `• Quantidade de itens diferentes: ${cartItems.length}\n`;
+  message += `• Total de produtos: ${totalItems} unidade${totalItems > 1 ? 's' : ''}\n`;
+  message += `• Valor total: *R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+  
+  // Dados para entrega e conclusão
+  message += `*📱 DADOS PARA CONTATO:*\n`;
+  message += `Por favor, informe:\n`;
+  message += `- Nome completo\n`;
+  message += `- Endereço para entrega\n`;
+  message += `- Telefone para confirmação\n\n`;
+  
+  message += `Muito obrigado pela preferência! 💖\nCynthia Makeup\n\n_Compra realizada pelo site_`;
   
   return message;
 }
