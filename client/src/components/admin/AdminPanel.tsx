@@ -106,13 +106,78 @@ const MOCK_ORDERS = [
   }
 ];
 
-// Dados mockup para o histórico de vendas
+// Dados mockup para o histórico de vendas de pedidos finalizados
 const MOCK_SALES_HISTORY = [
-  { month: "Janeiro", year: 2025, sales: 45, revenue: 543000, topProduct: "Base Líquida Ultra HD", topCategory: "face", topBrand: "Cynthia Beauty" },
-  { month: "Fevereiro", year: 2025, sales: 62, revenue: 798000, topProduct: "Paleta de Sombras Glamour", topCategory: "eyes", topBrand: "Cynthia Beauty" },
-  { month: "Março", year: 2025, sales: 58, revenue: 654000, topProduct: "Base Líquida Ultra HD", topCategory: "face", topBrand: "Cynthia Beauty" },
-  { month: "Abril", year: 2025, sales: 73, revenue: 892000, topProduct: "Batom Matte Longa Duração", topCategory: "lips", topBrand: "Cynthia Beauty" },
-  { month: "Maio", year: 2025, sales: 41, revenue: 489000, topProduct: "Paleta de Sombras Glamour", topCategory: "eyes", topBrand: "Cynthia Beauty" }
+  { 
+    month: "Janeiro", 
+    year: 2025, 
+    sales: 28, 
+    revenue: 389500, 
+    topProduct: "Base Líquida Ultra HD", 
+    topCategory: "face", 
+    topBrand: "Cynthia Beauty",
+    completedOrders: [
+      { id: 101, date: "2025-01-05", customer: "Mariana Santos", total: 29970 },
+      { id: 102, date: "2025-01-12", customer: "Carolina Lima", total: 44960 },
+      { id: 103, date: "2025-01-18", customer: "Tatiana Mendes", total: 19980 }
+    ]
+  },
+  { 
+    month: "Fevereiro", 
+    year: 2025, 
+    sales: 42, 
+    revenue: 612000, 
+    topProduct: "Paleta de Sombras Glamour", 
+    topCategory: "eyes", 
+    topBrand: "Cynthia Beauty",
+    completedOrders: [
+      { id: 104, date: "2025-02-03", customer: "Letícia Ferreira", total: 32960 },
+      { id: 105, date: "2025-02-15", customer: "Pamela Costa", total: 27970 },
+      { id: 106, date: "2025-02-22", customer: "Renata Silva", total: 59950 }
+    ]
+  },
+  { 
+    month: "Março", 
+    year: 2025, 
+    sales: 36, 
+    revenue: 485700, 
+    topProduct: "Base Líquida Ultra HD", 
+    topCategory: "face", 
+    topBrand: "Cynthia Beauty",
+    completedOrders: [
+      { id: 107, date: "2025-03-08", customer: "Fernanda Costa", total: 24980 },
+      { id: 108, date: "2025-03-17", customer: "Ana Paula", total: 32960 },
+      { id: 109, date: "2025-03-25", customer: "Bianca Souza", total: 37950 }
+    ]
+  },
+  { 
+    month: "Abril", 
+    year: 2025, 
+    sales: 51, 
+    revenue: 729000, 
+    topProduct: "Batom Matte Longa Duração", 
+    topCategory: "lips", 
+    topBrand: "Cynthia Beauty",
+    completedOrders: [
+      { id: 110, date: "2025-04-02", customer: "Patrícia Oliveira", total: 42970 },
+      { id: 111, date: "2025-04-14", customer: "Gabriela Almeida", total: 30980 },
+      { id: 112, date: "2025-04-23", customer: "Juliana Martins", total: 54950 }
+    ]
+  },
+  { 
+    month: "Maio", 
+    year: 2025, 
+    sales: 33, 
+    revenue: 421800, 
+    topProduct: "Paleta de Sombras Glamour", 
+    topCategory: "eyes", 
+    topBrand: "Cynthia Beauty",
+    completedOrders: [
+      { id: 113, date: "2025-05-07", customer: "Luiza Campos", total: 37960 },
+      { id: 114, date: "2025-05-16", customer: "Carla Moreira", total: 45970 },
+      { id: 2, date: "2025-05-16", customer: "Ana Paula", total: 32960 }
+    ]
+  }
 ];
 
 const AdminPanel = () => {
@@ -968,7 +1033,7 @@ const AdminPanel = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Detalhamento Mensal</CardTitle>
+                <CardTitle>Detalhamento Mensal (Vendas Finalizadas)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -980,7 +1045,7 @@ const AdminPanel = () => {
                         <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Receita</th>
                         <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Produto Mais Vendido</th>
                         <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
-                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Marca</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1019,10 +1084,90 @@ const AdminPanel = () => {
                             </Badge>
                           </td>
                           <td className="py-4 text-sm">
-                            {month.topBrand}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => {
+                                setSelectedOrder({
+                                  id: month.completedOrders[0].id,
+                                  customer: month.completedOrders[0].customer,
+                                  date: month.completedOrders[0].date,
+                                  status: "completed",
+                                  email: "cliente@exemplo.com",
+                                  phone: "83 99999-9999",
+                                  total: month.completedOrders[0].total,
+                                  items: [
+                                    { productId: 1, productName: month.topProduct, quantity: 1, price: month.completedOrders[0].total }
+                                  ]
+                                });
+                                setIsOrderDetailsOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Pedidos Finalizados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                        <th className="py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {MOCK_SALES_HISTORY.flatMap(month => month.completedOrders)
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 10)
+                        .map((order, index) => (
+                          <tr key={index} className="border-b hover:bg-gray-50">
+                            <td className="py-3 text-sm font-medium">{order.id}</td>
+                            <td className="py-3 text-sm">{new Date(order.date).toLocaleDateString('pt-BR')}</td>
+                            <td className="py-3 text-sm">{order.customer}</td>
+                            <td className="py-3 text-sm text-right font-medium">{`R$ ${(order.total / 100).toFixed(2).replace('.', ',')}`}</td>
+                            <td className="py-3 text-sm text-center">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  setSelectedOrder({
+                                    id: order.id,
+                                    customer: order.customer,
+                                    date: order.date,
+                                    status: "completed",
+                                    email: "cliente@exemplo.com",
+                                    phone: "83 99999-9999",
+                                    total: order.total,
+                                    items: [
+                                      { productId: 1, productName: "Produto do pedido", quantity: 1, price: order.total }
+                                    ]
+                                  });
+                                  setIsOrderDetailsOpen(true);
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
+                      }
                     </tbody>
                   </table>
                 </div>
@@ -1283,7 +1428,7 @@ const AdminPanel = () => {
                       )}
                     </p>
                     <p className="text-sm"><span className="font-medium">Total:</span> {`R$ ${(selectedOrder.total / 100).toFixed(2).replace('.', ',')}`}</p>
-                    <p className="text-sm"><span className="font-medium">Itens:</span> {selectedOrder.items.reduce((acc, item) => acc + item.quantity, 0)}</p>
+                    <p className="text-sm"><span className="font-medium">Itens:</span> {selectedOrder.items.reduce((acc: number, item: any) => acc + item.quantity, 0)}</p>
                   </div>
                 </div>
               </div>
@@ -1301,7 +1446,7 @@ const AdminPanel = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedOrder.items.map((item, index) => (
+                      {selectedOrder.items.map((item: any, index: number) => (
                         <tr key={index} className="border-b hover:bg-gray-50">
                           <td className="py-3 text-sm">{item.productName}</td>
                           <td className="py-3 text-sm text-center">{`R$ ${(item.price / 100).toFixed(2).replace('.', ',')}`}</td>
