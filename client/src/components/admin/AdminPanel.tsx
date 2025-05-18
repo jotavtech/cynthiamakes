@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Loader2, 
@@ -16,7 +16,19 @@ import {
   PlusCircle,
   MinusCircle,
   Truck,
-  History
+  History,
+  ShoppingBag,
+  Check,
+  X,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
+  Calendar,
+  CreditCard,
+  DollarSign,
+  ClipboardCheck,
+  TrendingUp,
+  Users
 } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
 import ProductForm from "./ProductForm";
@@ -51,6 +63,58 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 
+// Dados mockup para demonstração
+const MOCK_ORDERS = [
+  { 
+    id: 1, 
+    customer: "Maria Silva", 
+    email: "maria@example.com", 
+    phone: "83998765432", 
+    date: "2025-05-17", 
+    status: "pending", 
+    total: 16980,
+    items: [
+      { productId: 2, productName: "Batom Matte Longa Duração", quantity: 2, price: 4990 },
+      { productId: 3, productName: "Paleta de Sombras Glamour", quantity: 1, price: 12990 }
+    ]
+  },
+  { 
+    id: 2, 
+    customer: "Ana Paula", 
+    email: "ana@example.com", 
+    phone: "83987654321", 
+    date: "2025-05-16", 
+    status: "completed", 
+    total: 32960,
+    items: [
+      { productId: 2, productName: "Batom Matte Longa Duração", quantity: 1, price: 4990 },
+      { productId: 3, productName: "Paleta de Sombras Glamour", quantity: 1, price: 12990 },
+      { productId: 1, productName: "Base Líquida Ultra HD", quantity: 1, price: 14980 }
+    ]
+  },
+  { 
+    id: 3, 
+    customer: "Fernanda Costa", 
+    email: "fernanda@example.com", 
+    phone: "83994443333", 
+    date: "2025-05-15", 
+    status: "cancelled", 
+    total: 14980,
+    items: [
+      { productId: 1, productName: "Base Líquida Ultra HD", quantity: 1, price: 14980 }
+    ]
+  }
+];
+
+// Dados mockup para o histórico de vendas
+const MOCK_SALES_HISTORY = [
+  { month: "Janeiro", year: 2025, sales: 45, revenue: 543000, topProduct: "Base Líquida Ultra HD", topCategory: "face", topBrand: "Cynthia Beauty" },
+  { month: "Fevereiro", year: 2025, sales: 62, revenue: 798000, topProduct: "Paleta de Sombras Glamour", topCategory: "eyes", topBrand: "Cynthia Beauty" },
+  { month: "Março", year: 2025, sales: 58, revenue: 654000, topProduct: "Base Líquida Ultra HD", topCategory: "face", topBrand: "Cynthia Beauty" },
+  { month: "Abril", year: 2025, sales: 73, revenue: 892000, topProduct: "Batom Matte Longa Duração", topCategory: "lips", topBrand: "Cynthia Beauty" },
+  { month: "Maio", year: 2025, sales: 41, revenue: 489000, topProduct: "Paleta de Sombras Glamour", topCategory: "eyes", topBrand: "Cynthia Beauty" }
+];
+
 const AdminPanel = () => {
   const { user, logout } = useAdmin();
   const { toast } = useToast();
@@ -63,6 +127,14 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("products");
   const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
   const [stockAction, setStockAction] = useState<"add" | "remove" | null>(null);
+  
+  // Estados para as novas funcionalidades de vendas e histórico
+  const [salesSearchTerm, setSalesSearchTerm] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
+  const [isAddSaleOpen, setIsAddSaleOpen] = useState(false);
+  const [historySortField, setHistorySortField] = useState("month");
+  const [historySortDirection, setHistorySortDirection] = useState<"asc" | "desc">("desc");
 
   const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],
@@ -227,7 +299,7 @@ const AdminPanel = () => {
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-3 md:w-[600px] mb-6">
+        <TabsList className="grid grid-cols-5 md:w-[800px] mb-6">
           <TabsTrigger value="overview">
             <LayoutDashboard className="mr-2 h-4 w-4" /> Visão Geral
           </TabsTrigger>
@@ -236,6 +308,12 @@ const AdminPanel = () => {
           </TabsTrigger>
           <TabsTrigger value="inventory">
             <Boxes className="mr-2 h-4 w-4" /> Estoque
+          </TabsTrigger>
+          <TabsTrigger value="sales">
+            <ShoppingBag className="mr-2 h-4 w-4" /> Vendas
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            <History className="mr-2 h-4 w-4" /> Histórico
           </TabsTrigger>
         </TabsList>
         
@@ -667,6 +745,291 @@ const AdminPanel = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Aba de Vendas */}
+        <TabsContent value="sales">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Confirmação de Vendas</h2>
+              <Button onClick={() => setIsAddSaleOpen(true)} className="bg-accent hover:bg-accent/90">
+                <Plus className="mr-2 h-4 w-4" /> Adicionar Venda
+              </Button>
+            </div>
+
+            <div className="bg-white p-4 rounded-md shadow-sm mb-6">
+              <div className="flex flex-col md:flex-row gap-4 md:items-center mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Buscar por cliente, email, telefone..."
+                    className="pl-10"
+                    value={salesSearchTerm}
+                    onChange={(e) => setSalesSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="flex items-center">
+                    <Calendar className="mr-2 h-4 w-4" /> Filtrar por Data
+                  </Button>
+                  <Button variant="outline" size="sm" className="flex items-center">
+                    <ArrowUpDown className="mr-2 h-4 w-4" /> Ordenar
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Card>
+              <CardHeader className="py-4">
+                <CardTitle className="text-lg">Pedidos Recentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {MOCK_ORDERS.map((order) => (
+                        <tr key={order.id} className="border-b hover:bg-gray-50">
+                          <td className="py-4 text-sm font-medium">{order.id}</td>
+                          <td className="py-4 text-sm">
+                            <div>
+                              <span className="font-medium">{order.customer}</span>
+                              <div className="text-gray-500 text-xs">{order.phone}</div>
+                            </div>
+                          </td>
+                          <td className="py-4 text-sm">
+                            {new Date(order.date).toLocaleDateString('pt-BR')}
+                          </td>
+                          <td className="py-4 text-sm font-medium">
+                            {`R$ ${(order.total / 100).toFixed(2).replace('.', ',')}`}
+                          </td>
+                          <td className="py-4 text-sm">
+                            {order.status === 'pending' ? (
+                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                                Pendente
+                              </Badge>
+                            ) : order.status === 'completed' ? (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                Concluído
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                Cancelado
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="py-4 text-sm">
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setIsOrderDetailsOpen(true);
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              {order.status === 'pending' && (
+                                <>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <Check className="h-4 w-4 text-green-500" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <X className="h-4 w-4 text-red-500" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Aba de Histórico */}
+        <TabsContent value="history">
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Histórico de Vendas</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  if (historySortField === "month") {
+                    setHistorySortDirection(prev => prev === "asc" ? "desc" : "asc");
+                  } else {
+                    setHistorySortField("month");
+                    setHistorySortDirection("desc");
+                  }
+                }}>
+                  {historySortField === "month" ? (
+                    <>
+                      Data {historySortDirection === "asc" ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
+                    </>
+                  ) : "Data"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  if (historySortField === "revenue") {
+                    setHistorySortDirection(prev => prev === "asc" ? "desc" : "asc");
+                  } else {
+                    setHistorySortField("revenue");
+                    setHistorySortDirection("desc");
+                  }
+                }}>
+                  {historySortField === "revenue" ? (
+                    <>
+                      Valor {historySortDirection === "asc" ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
+                    </>
+                  ) : "Valor"}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  if (historySortField === "topProduct") {
+                    setHistorySortDirection(prev => prev === "asc" ? "desc" : "asc");
+                  } else {
+                    setHistorySortField("topProduct");
+                    setHistorySortDirection("asc");
+                  }
+                }}>
+                  {historySortField === "topProduct" ? (
+                    <>
+                      A-Z {historySortDirection === "asc" ? <ChevronUp className="ml-1 h-4 w-4" /> : <ChevronDown className="ml-1 h-4 w-4" />}
+                    </>
+                  ) : "A-Z"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Card className="bg-green-50 border-green-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-green-700">
+                    <TrendingUp className="h-4 w-4 inline-block mr-2" />
+                    Receita Total
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-700">
+                    {`R$ ${(MOCK_SALES_HISTORY.reduce((acc, month) => acc + month.revenue, 0) / 100).toFixed(2).replace('.', ',')}`}
+                  </div>
+                  <p className="text-xs text-green-700 mt-1">
+                    Receita total acumulada
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-blue-50 border-blue-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-blue-700">
+                    <ShoppingBag className="h-4 w-4 inline-block mr-2" />
+                    Total de Vendas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-700">
+                    {MOCK_SALES_HISTORY.reduce((acc, month) => acc + month.sales, 0)}
+                  </div>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Pedidos finalizados
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-purple-50 border-purple-200">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-purple-700">
+                    <Users className="h-4 w-4 inline-block mr-2" />
+                    Ticket Médio
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-700">
+                    {`R$ ${((MOCK_SALES_HISTORY.reduce((acc, month) => acc + month.revenue, 0) / 
+                      MOCK_SALES_HISTORY.reduce((acc, month) => acc + month.sales, 0)) / 100).toFixed(2).replace('.', ',')}`}
+                  </div>
+                  <p className="text-xs text-purple-700 mt-1">
+                    Valor médio por pedido
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Detalhamento Mensal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Mês/Ano</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Vendas</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Receita</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Produto Mais Vendido</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
+                        <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Marca</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {MOCK_SALES_HISTORY
+                        .sort((a, b) => {
+                          if (historySortField === "month") {
+                            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                            const aIndex = months.indexOf(a.month);
+                            const bIndex = months.indexOf(b.month);
+                            return historySortDirection === "asc" ? aIndex - bIndex : bIndex - aIndex;
+                          } else if (historySortField === "revenue") {
+                            return historySortDirection === "asc" ? a.revenue - b.revenue : b.revenue - a.revenue;
+                          } else {
+                            return historySortDirection === "asc" 
+                              ? a.topProduct.localeCompare(b.topProduct) 
+                              : b.topProduct.localeCompare(a.topProduct);
+                          }
+                        })
+                        .map((month, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="py-4 text-sm font-medium">
+                            {month.month}/{month.year}
+                          </td>
+                          <td className="py-4 text-sm">
+                            {month.sales} pedidos
+                          </td>
+                          <td className="py-4 text-sm font-medium">
+                            {`R$ ${(month.revenue / 100).toFixed(2).replace('.', ',')}`}
+                          </td>
+                          <td className="py-4 text-sm">
+                            {month.topProduct}
+                          </td>
+                          <td className="py-4 text-sm">
+                            <Badge variant="outline" className="bg-gray-100">
+                              {month.topCategory}
+                            </Badge>
+                          </td>
+                          <td className="py-4 text-sm">
+                            {month.topBrand}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Add Product Dialog */}
@@ -877,6 +1240,210 @@ const AdminPanel = () => {
               onCancel={() => setIsAdjustStockOpen(false)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para visualizar detalhes do pedido */}
+      <Dialog open={isOrderDetailsOpen} onOpenChange={setIsOrderDetailsOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Pedido #{selectedOrder?.id}</DialogTitle>
+            <DialogDescription>
+              {selectedOrder && new Date(selectedOrder.date).toLocaleDateString('pt-BR')}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Informações do Cliente</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p className="text-sm"><span className="font-medium">Nome:</span> {selectedOrder.customer}</p>
+                    <p className="text-sm"><span className="font-medium">Email:</span> {selectedOrder.email}</p>
+                    <p className="text-sm"><span className="font-medium">Telefone:</span> {selectedOrder.phone}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-2">Informações do Pedido</h3>
+                  <div className="bg-gray-50 p-3 rounded-md">
+                    <p className="text-sm">
+                      <span className="font-medium">Status:</span>{" "}
+                      {selectedOrder.status === 'pending' ? (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          Pendente
+                        </Badge>
+                      ) : selectedOrder.status === 'completed' ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          Concluído
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                          Cancelado
+                        </Badge>
+                      )}
+                    </p>
+                    <p className="text-sm"><span className="font-medium">Total:</span> {`R$ ${(selectedOrder.total / 100).toFixed(2).replace('.', ',')}`}</p>
+                    <p className="text-sm"><span className="font-medium">Itens:</span> {selectedOrder.items.reduce((acc, item) => acc + item.quantity, 0)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium mb-2">Produtos</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 text-left text-xs font-medium text-gray-500 uppercase">Produto</th>
+                        <th className="py-2 text-center text-xs font-medium text-gray-500 uppercase">Preço</th>
+                        <th className="py-2 text-center text-xs font-medium text-gray-500 uppercase">Qtd</th>
+                        <th className="py-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.items.map((item, index) => (
+                        <tr key={index} className="border-b hover:bg-gray-50">
+                          <td className="py-3 text-sm">{item.productName}</td>
+                          <td className="py-3 text-sm text-center">{`R$ ${(item.price / 100).toFixed(2).replace('.', ',')}`}</td>
+                          <td className="py-3 text-sm text-center">{item.quantity}</td>
+                          <td className="py-3 text-sm text-right font-medium">{`R$ ${((item.price * item.quantity) / 100).toFixed(2).replace('.', ',')}`}</td>
+                        </tr>
+                      ))}
+                      <tr className="bg-gray-50">
+                        <td colSpan={3} className="py-3 text-sm text-right font-bold">Total</td>
+                        <td className="py-3 text-sm text-right font-bold">{`R$ ${(selectedOrder.total / 100).toFixed(2).replace('.', ',')}`}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="flex justify-between">
+            {selectedOrder && selectedOrder.status === 'pending' && (
+              <div className="flex gap-2">
+                <Button variant="outline" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+                  <Check className="mr-2 h-4 w-4" />
+                  Aprovar Pedido
+                </Button>
+                <Button variant="outline" className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100">
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar Pedido
+                </Button>
+              </div>
+            )}
+            <Button variant="outline" onClick={() => setIsOrderDetailsOpen(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal para adicionar venda */}
+      <Dialog open={isAddSaleOpen} onOpenChange={setIsAddSaleOpen}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Registrar Nova Venda</DialogTitle>
+            <DialogDescription>
+              Adicione os detalhes da venda para registrar no sistema.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="customer">Nome do Cliente</Label>
+                <Input id="customer" placeholder="Nome completo" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="email@exemplo.com" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input id="phone" placeholder="(00) 00000-0000" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="date">Data da Venda</Label>
+                <Input id="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} />
+              </div>
+            </div>
+            
+            <div className="space-y-2 mt-4">
+              <div className="flex justify-between items-center">
+                <Label>Produtos</Label>
+                <Button variant="outline" type="button" size="sm" className="h-8">
+                  <Plus className="h-4 w-4 mr-1" /> Adicionar Produto
+                </Button>
+              </div>
+              
+              <div className="border rounded-md">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="p-2 text-left text-xs font-medium text-gray-500 uppercase">Produto</th>
+                        <th className="p-2 text-center text-xs font-medium text-gray-500 uppercase">Preço</th>
+                        <th className="p-2 text-center text-xs font-medium text-gray-500 uppercase">Qtd</th>
+                        <th className="p-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+                        <th className="p-2 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products && products.slice(0, 2).map((product, index) => (
+                        <tr key={index} className="border-b">
+                          <td className="p-2 text-sm">{product.name}</td>
+                          <td className="p-2 text-sm text-center">{product.formattedPrice}</td>
+                          <td className="p-2 text-center">
+                            <Input 
+                              type="number" 
+                              defaultValue="1" 
+                              min="1" 
+                              className="h-8 w-16 text-center mx-auto"
+                            />
+                          </td>
+                          <td className="p-2 text-sm text-right">{product.formattedPrice}</td>
+                          <td className="p-2">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="bg-muted/50">
+                        <td colSpan={3} className="p-2 text-sm text-right font-medium">Total</td>
+                        <td className="p-2 text-sm text-right font-bold">
+                          {products && `R$ ${(products.slice(0, 2).reduce((acc, product) => {
+                            return acc + product.price;
+                          }, 0) / 100).toFixed(2).replace('.', ',')}`}
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2 mt-4">
+              <Label htmlFor="notes">Observações</Label>
+              <Textarea id="notes" placeholder="Observações adicionais sobre a venda..." />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddSaleOpen(false)}>Cancelar</Button>
+            <Button onClick={() => {
+              toast({
+                title: "Venda registrada com sucesso!",
+                description: "A venda foi adicionada ao sistema.",
+              });
+              setIsAddSaleOpen(false);
+            }}>
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              Registrar Venda
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
