@@ -671,17 +671,45 @@ const AdminPanel = () => {
 
       {/* Add Product Dialog */}
       <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Produto</DialogTitle>
           </DialogHeader>
           <ProductForm onSubmit={handleAddProduct} />
+
+          {/* Botões de navegação dentro do modal */}
+          <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-2">
+            <Button 
+              onClick={() => {
+                const modal = document.querySelector('div[role="dialog"]');
+                if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              size="icon" 
+              variant="secondary"
+              className="h-8 w-8 rounded-full shadow-md"
+              aria-label="Rolar para o topo do formulário"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+            </Button>
+            <Button 
+              onClick={() => {
+                const modal = document.querySelector('div[role="dialog"]');
+                if (modal) modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
+              }} 
+              size="icon" 
+              variant="secondary"
+              className="h-8 w-8 rounded-full shadow-md"
+              aria-label="Rolar para o final do formulário"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Edit Product Dialog */}
       <Dialog open={isEditProductOpen} onOpenChange={setIsEditProductOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Produto</DialogTitle>
           </DialogHeader>
@@ -691,6 +719,34 @@ const AdminPanel = () => {
               initialData={selectedProduct} 
             />
           )}
+          
+          {/* Botões de navegação dentro do modal */}
+          <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-2">
+            <Button 
+              onClick={() => {
+                const modal = document.querySelector('div[role="dialog"]');
+                if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              size="icon" 
+              variant="secondary"
+              className="h-8 w-8 rounded-full shadow-md"
+              aria-label="Rolar para o topo do formulário"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+            </Button>
+            <Button 
+              onClick={() => {
+                const modal = document.querySelector('div[role="dialog"]');
+                if (modal) modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
+              }} 
+              size="icon" 
+              variant="secondary"
+              className="h-8 w-8 rounded-full shadow-md"
+              aria-label="Rolar para o final do formulário"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
