@@ -178,8 +178,44 @@ const AdminPanel = () => {
     }
   };
 
+  // Função para rolar para o topo da página
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  // Função para rolar para o final da página
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
+
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 relative">
+      {/* Botões flutuantes para navegação na página */}
+      <div className="fixed right-6 bottom-24 z-50 flex flex-col gap-2">
+        <Button 
+          onClick={scrollToTop} 
+          size="icon" 
+          className="bg-white/80 backdrop-blur-sm shadow-lg hover:bg-accent hover:text-white rounded-full transition-all"
+          aria-label="Rolar para o topo"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
+        </Button>
+        <Button 
+          onClick={scrollToBottom} 
+          size="icon" 
+          className="bg-white/80 backdrop-blur-sm shadow-lg hover:bg-accent hover:text-white rounded-full transition-all"
+          aria-label="Rolar para o final"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+        </Button>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold font-montserrat">Painel Administrativo</h1>
