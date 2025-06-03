@@ -9,8 +9,11 @@ import {
   CartItemWithProduct,
   InventoryTransaction,
   InsertInventoryTransaction,
+  Category,
+  InsertCategory,
   users,
   products,
+  categories,
   cartItems,
   inventoryTransactions
 } from "@shared/schema";
@@ -28,6 +31,7 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
+    // Usar PostgreSQL store para sessões
     this.sessionStore = new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
@@ -49,6 +53,45 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  // Métodos de categoria
+  async getCategories(): Promise<Category[]> {
+    const allCategories = await db.select().from(categories);
+    return allCategories;
+  }
+
+  async getCategoryById(id: number): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+    return category;
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db
+      .insert(categories)
+      .values(insertCategory)
+      .returning();
+    
+    return category;
+  }
+
+  async updateCategory(id: number, updateData: Partial<InsertCategory>): Promise<Category | undefined> {
+    const [category] = await db
+      .update(categories)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(categories.id, id))
+      .returning();
+    
+    return category;
+  }
+
+  async deleteCategory(id: number): Promise<boolean> {
+    const result = await db
+      .delete(categories)
+      .where(eq(categories.id, id))
+      .returning({ id: categories.id });
+    
+    return result.length > 0;
   }
 
   // Métodos de produto

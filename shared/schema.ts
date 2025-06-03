@@ -2,6 +2,7 @@ import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Tabela de usuários
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -14,20 +15,46 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
+// Tabela de sessões para express-session
+export const session = pgTable("session", {
+  sid: text("sid").primaryKey(),
+  sess: text("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
+
+// Tabela de categorias de produtos
+export const categories = pgTable("product_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  imageUrl: text("image_url").notNull(),
+  slug: text("slug").notNull().unique(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Tabela de produtos
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  price: integer("price").notNull(), // Store price in cents to avoid floating point issues
+  price: integer("price").notNull(),
   category: text("category").notNull(),
   brand: text("brand").notNull(),
-  imageUrl: text("image_url").notNull(),
-  videoUrl: text("video_url").notNull().default(""), 
+  imageUrl: text("image_url").notNull().default("https://via.placeholder.com/400x400/f3f4f6/9ca3af?text=Produto"),
+  videoUrl: text("video_url").notNull().default(""),
   isNew: boolean("is_new").default(false).notNull(),
   isFeatured: boolean("is_featured").default(false).notNull(),
-  stock: integer("stock").default(0).notNull(), // Track inventory stock level
-  lowStockThreshold: integer("low_stock_threshold").default(5).notNull(), // Threshold for low stock warning
-  sku: text("sku").notNull().default(""), // Stock Keeping Unit for inventory tracking
+  stock: integer("stock").default(0).notNull(),
+  lowStockThreshold: integer("low_stock_threshold").default(5).notNull(),
+  sku: text("sku").notNull().default(""),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -36,6 +63,7 @@ export const insertProductSchema = createInsertSchema(products).omit({
   createdAt: true,
 });
 
+// Tabela de itens do carrinho
 export const cartItems = pgTable("cart_items", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").notNull(),
@@ -47,14 +75,14 @@ export const insertCartItemSchema = createInsertSchema(cartItems).omit({
   id: true,
 });
 
-// Inventory transaction table for tracking stock changes
+// Tabela de transações de inventário
 export const inventoryTransactions = pgTable("inventory_transactions", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").notNull(),
-  quantity: integer("quantity").notNull(), // Positive for additions, negative for reductions
-  type: text("type").notNull(), // Types: "purchase", "sale", "adjustment", "return"
+  quantity: integer("quantity").notNull(),
+  type: text("type").notNull(),
   notes: text("notes").default(""),
-  createdBy: integer("created_by").notNull(), // User ID who created the transaction
+  createdBy: integer("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -63,9 +91,12 @@ export const insertInventoryTransactionSchema = createInsertSchema(inventoryTran
   createdAt: true,
 });
 
-// Types
+// Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -76,13 +107,12 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type InventoryTransaction = typeof inventoryTransactions.$inferSelect;
 export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransactionSchema>;
 
-// Extended Product type with formatted price for frontend
+// Tipos estendidos
 export type DisplayProduct = Product & {
   formattedPrice: string;
   stockStatus?: "in_stock" | "low_stock" | "out_of_stock";
 };
 
-// Cart with product details
 export type CartItemWithProduct = CartItem & {
   product: DisplayProduct;
 };

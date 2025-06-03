@@ -1,47 +1,49 @@
 import { Link } from "wouter";
-
-interface Category {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-}
-
-const categories: Category[] = [
-  {
-    id: "face",
-    name: "Rosto",
-    description: "Bases, corretivos e mais",
-    image: "https://images.unsplash.com/photo-1631730486572-226d1f595b68?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80"
-  },
-  {
-    id: "eyes",
-    name: "Olhos",
-    description: "Sombras, delineadores e máscaras",
-    image: "https://pixabay.com/get/g9161a855dd5bbc4d37d4bef8d8a233cf29275ef3fd43a5e9404df7fa5be341196aa9600f3ab509dd6750af15ebcbc3b3_1280.jpg"
-  },
-  {
-    id: "lips",
-    name: "Lábios",
-    description: "Batons, glosses e lápis",
-    image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80"
-  },
-  {
-    id: "accessories",
-    name: "Acessórios",
-    description: "Pincéis, esponjas e mais",
-    image: "https://images.unsplash.com/photo-1567721913486-6585f069b332?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80"
-  }
-];
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { Category } from "@shared/schema";
 
 const Categories = () => {
+  const { data: categories, isLoading, error } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  if (isLoading) {
+    return (
+      <section id="categorias" className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold font-montserrat text-center mb-12">Categorias</h2>
+          <div className="flex justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-accent" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !categories) {
+    return (
+      <section id="categorias" className="py-12 bg-white">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold font-montserrat text-center mb-12">Categorias</h2>
+          <div className="text-center text-red-500">
+            Erro ao carregar categorias. Tente novamente mais tarde.
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Filtra apenas categorias ativas
+  const activeCategories = categories.filter(category => category.isActive);
+
   return (
     <section id="categorias" className="py-12 bg-white">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold font-montserrat text-center mb-12">Categorias</h2>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {categories.map((category) => (
+          {activeCategories.map((category) => (
             <CategoryCard key={category.id} category={category} />
           ))}
         </div>
@@ -56,10 +58,10 @@ interface CategoryCardProps {
 
 const CategoryCard = ({ category }: CategoryCardProps) => {
   return (
-    <Link href={`/produtos?categoria=${category.id}`} className="group">
+    <Link href={`/produtos?categoria=${category.slug}`} className="group">
       <div className="relative overflow-hidden rounded-lg aspect-square">
         <img 
-          src={category.image} 
+          src={category.imageUrl} 
           alt={`Produtos para ${category.name}`} 
           className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
         />

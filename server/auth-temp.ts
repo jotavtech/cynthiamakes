@@ -6,8 +6,6 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
-// import connectPg from "connect-pg-simple";
-// import { pool } from "./db";
 
 declare global {
   namespace Express {
@@ -16,14 +14,6 @@ declare global {
 }
 
 const scryptAsync = promisify(scrypt);
-
-// Store de sessão usando MemoryStore temporariamente
-// const PostgresSessionStore = connectPg(session);
-// const sessionStore = new PostgresSessionStore({ 
-//   pool, 
-//   createTableIfMissing: true,
-//   tableName: 'session'
-// });
 
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
@@ -43,9 +33,9 @@ export function setupAuth(app: Express) {
     secret: process.env.SESSION_SECRET || 'minha-chave-secreta-temporaria',
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
+    store: storage.sessionStore, // Usar o sessionStore do storage
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Sempre false para desenvolvimento
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
     }
   };
@@ -133,4 +123,4 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
-}
+} 

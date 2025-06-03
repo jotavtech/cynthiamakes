@@ -28,7 +28,8 @@ import {
   DollarSign,
   ClipboardCheck,
   TrendingUp,
-  Users
+  Users,
+  Tag
 } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
 import ProductForm from "./ProductForm";
@@ -63,6 +64,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { StockAdjustmentForm } from "./StockAdjustmentForm";
+import CategoryManager from "./CategoryManager";
 
 // Tipos para o sistema de vendas
 type Order = {
@@ -101,15 +103,22 @@ type SalesHistoryMonth = {
 const SALES_HISTORY: SalesHistoryMonth[] = [];
 
 const AdminPanel = () => {
-  const { user, logout } = useAdmin();
+  const { user, logout, isLoggingOut } = useAdmin();
   const { toast } = useToast();
+
+  // Estados para controlar os modais
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<DisplayProduct | null>(null);
+
+  // Estados para controlar as abas
+  const [activeTab, setActiveTab] = useState("products");
+
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isViewProductOpen, setIsViewProductOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<DisplayProduct | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("products");
   const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
   const [stockAction, setStockAction] = useState<"add" | "remove" | null>(null);
   
@@ -264,6 +273,8 @@ const AdminPanel = () => {
 
   const handleAddProduct = async (data: any) => {
     try {
+      console.log("Tentando adicionar produto:", data);
+      
       // Usando apiRequest para enviar credenciais corretamente
       await apiRequest("POST", "/api/products", data);
       
@@ -273,10 +284,22 @@ const AdminPanel = () => {
         title: "Sucesso",
         description: "Produto adicionado com sucesso!",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erro ao adicionar produto:", error);
+      
+      let errorMessage = "Erro ao adicionar produto. Tente novamente.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Erro",
-        description: "Erro ao adicionar produto. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -403,18 +426,29 @@ const AdminPanel = () => {
           <h1 className="text-2xl font-bold font-montserrat">Painel Administrativo</h1>
           <p className="text-gray-500">Bem-vindo, {user?.username || 'Administrador'}</p>
         </div>
-        <Button onClick={logout} variant="outline">
-          <LogOut className="mr-2 h-4 w-4" /> Sair
+        <Button onClick={logout} variant="outline" disabled={isLoggingOut}>
+          {isLoggingOut ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saindo...
+            </>
+          ) : (
+            <>
+              <LogOut className="mr-2 h-4 w-4" /> Sair
+            </>
+          )}
         </Button>
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-5 md:w-[800px] mb-6">
+        <TabsList className="grid grid-cols-6 md:w-[900px] mb-6">
           <TabsTrigger value="overview">
             <LayoutDashboard className="mr-2 h-4 w-4" /> Visão Geral
           </TabsTrigger>
           <TabsTrigger value="products">
             <Package className="mr-2 h-4 w-4" /> Produtos
+          </TabsTrigger>
+          <TabsTrigger value="categories">
+            <Tag className="mr-2 h-4 w-4" /> Categorias
           </TabsTrigger>
           <TabsTrigger value="inventory">
             <Boxes className="mr-2 h-4 w-4" /> Estoque
@@ -885,6 +919,11 @@ const AdminPanel = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Aba de Categorias */}
+        <TabsContent value="categories">
+          <CategoryManager />
         </TabsContent>
 
         {/* Aba de Vendas */}

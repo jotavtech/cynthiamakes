@@ -8,7 +8,9 @@ import {
   CartItemWithProduct,
   DisplayProduct,
   InventoryTransaction,
-  InsertInventoryTransaction
+  InsertInventoryTransaction,
+  Category,
+  InsertCategory
 } from "@shared/schema";
 import session from "express-session";
 import { DatabaseStorage } from "./storage-db";
@@ -21,6 +23,13 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  // Category methods
+  getCategories(): Promise<Category[]>;
+  getCategoryById(id: number): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
+  deleteCategory(id: number): Promise<boolean>;
   
   // Product methods
   getProducts(): Promise<DisplayProduct[]>;
@@ -54,10 +63,12 @@ const formatPrice = (priceInCents: number): string => {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private products: Map<number, Product>;
+  private categories: Map<number, Category>;
   private cartItems: Map<number, CartItem>;
   private inventoryTransactions: Map<number, InventoryTransaction>;
   private currentUserId: number;
   private currentProductId: number;
+  private currentCategoryId: number;
   private currentCartItemId: number;
   private currentInventoryTransactionId: number;
   sessionStore: session.Store;
@@ -65,17 +76,24 @@ export class MemStorage implements IStorage {
   constructor() {
     this.users = new Map();
     this.products = new Map();
+    this.categories = new Map();
     this.cartItems = new Map();
     this.inventoryTransactions = new Map();
     this.currentUserId = 1;
     this.currentProductId = 1;
+    this.currentCategoryId = 1;
     this.currentCartItemId = 1;
     this.currentInventoryTransactionId = 1;
     
-    // Create memory session store
-    const MemoryStore = require('memorystore')(session);
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+    // Create memory session store - inicializar com um store temporário
+    this.sessionStore = new (session.MemoryStore)();
+    
+    // Substituir pelo memorystore quando disponível
+    import('memorystore').then((memorystore) => {
+      const MemoryStore = memorystore.default(session);
+      this.sessionStore = new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      });
     });
     
     // Add admin user
@@ -88,7 +106,8 @@ export class MemStorage implements IStorage {
       this.users.set(user.id, adminUser);
     });
     
-    // Add some initial products
+    // Add some initial products and categories
+    this.seedCategories();
     this.seedProducts();
   }
 
@@ -108,6 +127,52 @@ export class MemStorage implements IStorage {
     const user: User = { ...insertUser, id, isAdmin: false };
     this.users.set(id, user);
     return user;
+  }
+
+  // Category methods
+  async getCategories(): Promise<Category[]> {
+    return Array.from(this.categories.values());
+  }
+
+  async getCategoryById(id: number): Promise<Category | undefined> {
+    return this.categories.get(id);
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const id = this.currentCategoryId++;
+    const now = new Date();
+    
+    const category: Category = {
+      id,
+      name: insertCategory.name,
+      description: insertCategory.description,
+      imageUrl: insertCategory.imageUrl,
+      slug: insertCategory.slug,
+      isActive: insertCategory.isActive ?? true,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.categories.set(id, category);
+    return category;
+  }
+
+  async updateCategory(id: number, updateCategory: Partial<InsertCategory>): Promise<Category | undefined> {
+    const existingCategory = this.categories.get(id);
+    if (!existingCategory) return undefined;
+    
+    const updatedCategory: Category = {
+      ...existingCategory,
+      ...updateCategory,
+      updatedAt: new Date()
+    };
+    
+    this.categories.set(id, updatedCategory);
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: number): Promise<boolean> {
+    return this.categories.delete(id);
   }
 
   // Product methods
@@ -146,7 +211,7 @@ export class MemStorage implements IStorage {
       price: insertProduct.price,
       category: insertProduct.category,
       brand: insertProduct.brand,
-      imageUrl: insertProduct.imageUrl,
+      imageUrl: insertProduct.imageUrl || "https://via.placeholder.com/400x400/f3f4f6/9ca3af?text=Produto",
       videoUrl: insertProduct.videoUrl || "",
       isNew: insertProduct.isNew || false,
       isFeatured: insertProduct.isFeatured || false,
@@ -443,7 +508,53 @@ export class MemStorage implements IStorage {
       await this.createProduct(product);
     }
   }
+
+  private async seedCategories() {
+    const defaultCategories = [
+      {
+        name: "Rosto",
+        description: "Bases, corretivos e mais",
+        imageUrl: "https://images.unsplash.com/photo-1631730486572-226d1f595b68?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+        slug: "face",
+        isActive: true
+      },
+      {
+        name: "Olhos",
+        description: "Sombras, delineadores e máscaras",
+        imageUrl: "https://pixabay.com/get/g9161a855dd5bbc4d37d4bef8d8a233cf29275ef3fd43a5e9404df7fa5be341196aa9600f3ab509dd6750af15ebcbc3b3_1280.jpg",
+        slug: "eyes",
+        isActive: true
+      },
+      {
+        name: "Lábios",
+        description: "Batons, glosses e lápis",
+        imageUrl: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+        slug: "lips",
+        isActive: true
+      },
+      {
+        name: "Perfumaria",
+        description: "Perfumes, colônias e fragrâncias",
+        imageUrl: "https://images.unsplash.com/photo-1541643600914-78b084683601?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+        slug: "perfumery",
+        isActive: true
+      },
+      {
+        name: "Acessórios",
+        description: "Pincéis, esponjas e mais",
+        imageUrl: "https://images.unsplash.com/photo-1567721913486-6585f069b332?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600&q=80",
+        slug: "accessories",
+        isActive: true
+      }
+    ];
+
+    for (const categoryData of defaultCategories) {
+      await this.createCategory(categoryData);
+    }
+  }
 }
 
-// Use o armazenamento baseado em banco de dados PostgreSQL
-export const storage = new DatabaseStorage();
+// Use o armazenamento apropriado baseado no ambiente
+export const storage = process.env.NODE_ENV === "development" || process.env.FORCE_MEMORY_STORAGE === "true" 
+  ? new MemStorage() 
+  : new DatabaseStorage();

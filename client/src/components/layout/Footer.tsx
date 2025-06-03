@@ -8,8 +8,18 @@ import {
   Youtube, 
   Twitter 
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Category } from "@shared/schema";
 
 const Footer = () => {
+  // Buscar categorias da API
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  // Filtrar apenas categorias ativas
+  const activeCategories = categories?.filter(category => category.isActive) || [];
+
   return (
     <footer className="bg-primary text-white py-12">
       <div className="container mx-auto px-4">
@@ -86,31 +96,16 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-montserrat font-semibold mb-4">Categorias</h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/produtos?categoria=face" className="hover:text-secondary transition">
-                  Rosto
-                </Link>
-              </li>
-              <li>
-                <Link href="/produtos?categoria=eyes" className="hover:text-secondary transition">
-                  Olhos
-                </Link>
-              </li>
-              <li>
-                <Link href="/produtos?categoria=lips" className="hover:text-secondary transition">
-                  Lábios
-                </Link>
-              </li>
-              <li>
-                <Link href="/produtos?categoria=accessories" className="hover:text-secondary transition">
-                  Acessórios
-                </Link>
-              </li>
-              <li>
-                <Link href="/produtos?categoria=kits" className="hover:text-secondary transition">
-                  Kits
-                </Link>
-              </li>
+              {activeCategories.map((category) => (
+                <li key={category.id}>
+                  <Link 
+                    href={`/produtos?categoria=${category.slug}`} 
+                    className="hover:text-secondary transition"
+                  >
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           

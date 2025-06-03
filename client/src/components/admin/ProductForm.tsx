@@ -34,7 +34,7 @@ const productSchema = z.object({
   }),
   category: z.string().min(1, "Categoria é obrigatória"),
   brand: z.string().min(1, "Marca é obrigatória"),
-  imageUrl: z.string().min(1, "Imagem é obrigatória"),
+  imageUrl: z.string().optional(),
   videoUrl: z.string().url("URL de vídeo inválida").optional().or(z.literal("")),
   isNew: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
@@ -87,10 +87,17 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
       const productData = {
         ...data,
         price: priceInCents,
+        // Se não houver imagem, usar uma imagem padrão
+        imageUrl: data.imageUrl || "https://via.placeholder.com/400x400/f3f4f6/9ca3af?text=Produto",
         videoUrl: data.videoUrl || undefined, // Don't send empty string
       };
       
+      console.log("Dados do produto a serem enviados:", productData);
+      
       await onSubmit(productData);
+    } catch (error) {
+      console.error("Erro ao submeter produto:", error);
+      // O tratamento de erro será feito no componente pai
     } finally {
       setIsSubmitting(false);
     }
@@ -152,6 +159,7 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
                     <SelectItem value="face">Rosto</SelectItem>
                     <SelectItem value="eyes">Olhos</SelectItem>
                     <SelectItem value="lips">Lábios</SelectItem>
+                    <SelectItem value="perfumery">Perfumaria</SelectItem>
                     <SelectItem value="accessories">Acessórios</SelectItem>
                   </SelectContent>
                 </Select>
@@ -213,7 +221,7 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
                   />
                 </FormControl>
                 <FormDescription>
-                  Selecione uma imagem do produto na sua galeria
+                  Selecione uma imagem do produto (opcional - será usada uma imagem padrão se não fornecida)
                 </FormDescription>
                 <FormMessage />
               </FormItem>

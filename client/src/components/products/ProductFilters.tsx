@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Category } from "@shared/schema";
 
 interface FiltersState {
   categories: string[];
@@ -22,6 +24,11 @@ const ProductFilters = ({ onFilterChange }: ProductFiltersProps) => {
     categories: true,
     priceRanges: true,
     brands: true,
+  });
+
+  // Buscar categorias da API
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -56,6 +63,9 @@ const ProductFilters = ({ onFilterChange }: ProductFiltersProps) => {
     onFilterChange(resetFilters);
   };
 
+  // Filtrar apenas categorias ativas
+  const activeCategories = categories?.filter(category => category.isActive) || [];
+
   return (
     <div className="w-full md:w-64 bg-white p-6 rounded-lg shadow-sm h-fit sticky top-28">
       <div className="flex justify-between items-center mb-4">
@@ -84,30 +94,15 @@ const ProductFilters = ({ onFilterChange }: ProductFiltersProps) => {
         
         {expandedSections.categories && (
           <div className="space-y-2">
-            <FilterCheckbox 
-              id="category-face"
-              label="Rosto"
-              checked={filters.categories.includes('face')}
-              onChange={() => handleFilterChange('categories', 'face')}
-            />
-            <FilterCheckbox 
-              id="category-eyes"
-              label="Olhos"
-              checked={filters.categories.includes('eyes')}
-              onChange={() => handleFilterChange('categories', 'eyes')}
-            />
-            <FilterCheckbox 
-              id="category-lips"
-              label="Lábios"
-              checked={filters.categories.includes('lips')}
-              onChange={() => handleFilterChange('categories', 'lips')}
-            />
-            <FilterCheckbox 
-              id="category-accessories"
-              label="Acessórios"
-              checked={filters.categories.includes('accessories')}
-              onChange={() => handleFilterChange('categories', 'accessories')}
-            />
+            {activeCategories.map((category) => (
+              <FilterCheckbox 
+                key={category.id}
+                id={`category-${category.slug}`}
+                label={category.name}
+                checked={filters.categories.includes(category.slug)}
+                onChange={() => handleFilterChange('categories', category.slug)}
+              />
+            ))}
           </div>
         )}
       </div>

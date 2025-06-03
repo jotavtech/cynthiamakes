@@ -64,21 +64,34 @@ export function useAdmin() {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
-      queryClient.setQueryData(['/api/user'], null);
+      // Limpar cache do React Query
+      queryClient.clear();
       
-      // Remover dados do AdminContext
+      // Limpar dados locais
+      queryClient.setQueryData(['/api/user'], null);
       localStorage.removeItem('adminUser');
+      
+      // Forçar redirecionamento para a página inicial
+      window.location.href = '/';
       
       toast({
         title: "Logout realizado com sucesso",
       });
     },
     onError: (error: Error) => {
+      console.error("Erro no logout:", error);
+      
+      // Mesmo com erro, limpar dados locais e redirecionar
+      localStorage.removeItem('adminUser');
+      queryClient.setQueryData(['/api/user'], null);
+      
       toast({
-        title: "Falha ao fazer logout",
-        description: error.message,
-        variant: "destructive",
+        title: "Logout realizado",
+        description: "Você foi desconectado do sistema.",
       });
+      
+      // Redirecionar para página inicial
+      window.location.href = '/';
     },
   });
   
