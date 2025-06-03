@@ -173,12 +173,6 @@ const ProductFilters = ({ onFilterChange }: ProductFiltersProps) => {
         {expandedSections.brands && (
           <div className="space-y-2">
             <FilterCheckbox 
-              id="brand-cynthia"
-              label="Cynthia Beauty"
-              checked={filters.brands.includes('Cynthia Beauty')}
-              onChange={() => handleFilterChange('brands', 'Cynthia Beauty')}
-            />
-            <FilterCheckbox 
               id="brand-mac"
               label="MAC"
               checked={filters.brands.includes('MAC')}
@@ -195,6 +189,42 @@ const ProductFilters = ({ onFilterChange }: ProductFiltersProps) => {
               label="Ruby Rose"
               checked={filters.brands.includes('Ruby Rose')}
               onChange={() => handleFilterChange('brands', 'Ruby Rose')}
+            />
+            <FilterCheckbox 
+              id="brand-sigma"
+              label="Sigma Beauty"
+              checked={filters.brands.includes('Sigma Beauty')}
+              onChange={() => handleFilterChange('brands', 'Sigma Beauty')}
+            />
+            <FilterCheckbox 
+              id="brand-loreal"
+              label="L'Oréal"
+              checked={filters.brands.includes('L\'Oréal')}
+              onChange={() => handleFilterChange('brands', 'L\'Oréal')}
+            />
+            <FilterCheckbox 
+              id="brand-nars"
+              label="NARS"
+              checked={filters.brands.includes('NARS')}
+              onChange={() => handleFilterChange('brands', 'NARS')}
+            />
+            <FilterCheckbox 
+              id="brand-urbandecay"
+              label="Urban Decay"
+              checked={filters.brands.includes('Urban Decay')}
+              onChange={() => handleFilterChange('brands', 'Urban Decay')}
+            />
+            <FilterCheckbox 
+              id="brand-toofaced"
+              label="Too Faced"
+              checked={filters.brands.includes('Too Faced')}
+              onChange={() => handleFilterChange('brands', 'Too Faced')}
+            />
+            <FilterCheckbox 
+              id="brand-fenty"
+              label="Fenty Beauty"
+              checked={filters.brands.includes('Fenty Beauty')}
+              onChange={() => handleFilterChange('brands', 'Fenty Beauty')}
             />
           </div>
         )}

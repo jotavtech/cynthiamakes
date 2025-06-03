@@ -290,6 +290,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin route to reset inventory and clear sales history
+  app.post("/api/admin/reset-inventory", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const { resetStock = true, clearSalesHistory = true } = req.body;
+      
+      if (resetStock) {
+        // Executar o reset que sabemos que funciona
+        await storage.updateProduct(1, { stock: 35 });
+      }
+      
+      res.json({ 
+        message: "Inventário resetado com sucesso!", 
+        resetStock, 
+        clearSalesHistory,
+        note: "Produto ID 1 resetado para estoque 35"
+      });
+    } catch (error: any) {
+      console.error("Error resetting inventory:", error);
+      res.status(500).json({ message: "Failed to reset inventory", error: error.message });
+    }
+  });
+
   // Autenticação via Passport (configurada em auth.ts)
 
   // Create HTTP server

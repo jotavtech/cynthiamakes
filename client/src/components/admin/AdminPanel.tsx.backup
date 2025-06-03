@@ -64,24 +64,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { StockAdjustmentForm } from "./StockAdjustmentForm";
 
-// Tipos para o sistema de vendas
-type Order = {
-  id: number;
-  customer: string;
-  email: string;
-  phone: string;
-  date: string;
-  status: "pending" | "completed" | "cancelled";
-  total: number;
-  items: Array<{
-    productId: number;
-    productName: string;
-    quantity: number;
-    price: number;
-  }>;
-};
-
-type SalesHistoryMonth = {
+// Estado inicial para histórico de vendas - apenas dados reais serão mostrados
+const SALES_HISTORY: Array<{
   month: string;
   year: number;
   sales: number;
@@ -95,10 +79,7 @@ type SalesHistoryMonth = {
     customer: string;
     total: number;
   }>;
-};
-
-// Estado inicial para histórico de vendas - apenas dados reais serão mostrados
-const SALES_HISTORY: SalesHistoryMonth[] = [];
+}> = [];
 
 const AdminPanel = () => {
   const { user, logout } = useAdmin();
@@ -114,19 +95,12 @@ const AdminPanel = () => {
   const [stockAction, setStockAction] = useState<"add" | "remove" | null>(null);
   
   // Estado para vendas reais
-  const [realOrders, setRealOrders] = useState<Order[]>([]);
-  const [realSalesHistory, setRealSalesHistory] = useState<SalesHistoryMonth[]>(SALES_HISTORY);
+  const [realOrders, setRealOrders] = useState([]);
+  const [realSalesHistory, setRealSalesHistory] = useState(SALES_HISTORY);
   
   const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],
   });
-  
-  const filteredProducts = products?.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.brand.toLowerCase().includes(searchTerm.toLowerCase())
-  );
   
   // Estados para as novas funcionalidades de vendas e histórico
   const [salesSearchTerm, setSalesSearchTerm] = useState("");
@@ -261,6 +235,18 @@ const AdminPanel = () => {
       });
     }
   };
+  
+  const { data: lowStockProducts, isLoading: isLoadingLowStock } = useQuery<DisplayProduct[]>({
+    queryKey: ["/api/inventory/low-stock"],
+    enabled: activeTab === "inventory"
+  });
+  
+  const filteredProducts = products?.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.brand.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleAddProduct = async (data: any) => {
     try {
@@ -374,6 +360,30 @@ const AdminPanel = () => {
       top: document.documentElement.scrollHeight,
       behavior: 'smooth'
     });
+  };
+
+  const handleResetInventory = async () => {
+    try {
+      const response = await apiRequest("POST", "/api/admin/reset-inventory", {
+        resetStock: true,
+        clearSalesHistory: true
+      });
+      
+      toast({
+        title: "Inventário resetado com sucesso!",
+        description: "O estoque foi restaurado e o histórico de vendas foi limpo.",
+      });
+      
+      // Recarregar os dados
+      refetch();
+    } catch (error) {
+      console.error("Erro ao resetar inventário:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao resetar o inventário. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -491,7 +501,23 @@ const AdminPanel = () => {
               <CardDescription>Ferramentas para gerenciar o inventário e dados do sistema</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Funcionalidades de configuração do sistema removidas */}
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg bg-amber-50 border-amber-200">
+                  <h3 className="font-medium text-amber-800 mb-2">Resetar Inventário</h3>
+                  <p className="text-sm text-amber-700 mb-4">
+                    Esta ação irá restaurar o estoque dos produtos para os valores padrão e limpar o histórico de vendas antigas, 
+                    mantendo apenas as vendas reais realizadas no sistema.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                    onClick={handleResetInventory}
+                  >
+                    <Package className="mr-2 h-4 w-4" />
+                    Resetar Inventário e Limpar Histórico
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
           
@@ -565,7 +591,7 @@ const AdminPanel = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-amber-700">
-                  {products?.filter(p => p.stock <= (p.lowStockThreshold || 10)).length || 0}
+                  {lowStockProducts?.filter(p => p.stockStatus === "low_stock").length || 0}
                 </div>
                 <p className="text-xs text-amber-700 mt-1">
                   Produtos com estoque abaixo do limite
@@ -582,7 +608,7 @@ const AdminPanel = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-700">
-                  {products?.filter(p => p.stock <= 0).length || 0}
+                  {lowStockProducts?.filter(p => p.stockStatus === "out_of_stock").length || 0}
                 </div>
                 <p className="text-xs text-red-700 mt-1">
                   Produtos sem estoque disponível
@@ -610,15 +636,14 @@ const AdminPanel = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>Gerenciamento de Estoque - Todos os Produtos</CardTitle>
-              <CardDescription>Visualize e gerencie o estoque de todos os produtos cadastrados</CardDescription>
+              <CardTitle>Gerenciamento de Estoque</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isLoadingLowStock ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-accent" />
                 </div>
-              ) : products && products.length > 0 ? (
+              ) : lowStockProducts && lowStockProducts.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -636,9 +661,6 @@ const AdminPanel = () => {
                           Limite de Estoque
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Preço
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -647,7 +669,7 @@ const AdminPanel = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {products.map((product) => (
+                      {lowStockProducts.map((product) => (
                         <tr key={product.id}>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
@@ -656,13 +678,8 @@ const AdminPanel = () => {
                                 alt={product.name}
                                 className="h-10 w-10 rounded-md object-cover mr-3"
                               />
-                              <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {product.name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {product.category}
-                                </div>
                               </div>
                             </div>
                           </td>
@@ -673,25 +690,20 @@ const AdminPanel = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {product.stock || 0}
+                              {product.stock}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">
-                              {product.lowStockThreshold || 10}
+                              {product.lowStockThreshold}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {product.formattedPrice}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {(product.stock || 0) <= 0 ? (
+                            {product.stockStatus === "out_of_stock" ? (
                               <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                                 Esgotado
                               </Badge>
-                            ) : (product.stock || 0) <= (product.lowStockThreshold || 10) ? (
+                            ) : product.stockStatus === "low_stock" ? (
                               <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
                                 Baixo Estoque
                               </Badge>
@@ -724,7 +736,7 @@ const AdminPanel = () => {
                                   setStockAction("remove");
                                   setIsAdjustStockOpen(true);
                                 }}
-                                disabled={(product.stock || 0) <= 0}
+                                disabled={product.stock <= 0}
                               >
                                 <MinusCircle className="h-4 w-4 mr-1" /> Remover
                               </Button>
@@ -737,7 +749,7 @@ const AdminPanel = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  Nenhum produto cadastrado no sistema.
+                  Nenhum produto com baixo estoque encontrado.
                 </div>
               )}
             </CardContent>
@@ -953,61 +965,61 @@ const AdminPanel = () => {
                         </tr>
                       ) : (
                         realOrders.map((order) => (
-                        <tr key={order.id} className="border-b hover:bg-gray-50">
-                          <td className="py-4 text-sm font-medium">{order.id}</td>
-                          <td className="py-4 text-sm">
-                            <div>
-                              <span className="font-medium">{order.customer}</span>
-                              <div className="text-gray-500 text-xs">{order.phone}</div>
-                            </div>
-                          </td>
-                          <td className="py-4 text-sm">
-                            {new Date(order.date).toLocaleDateString('pt-BR')}
-                          </td>
-                          <td className="py-4 text-sm font-medium">
-                            {`R$ ${(order.total / 100).toFixed(2).replace('.', ',')}`}
-                          </td>
-                          <td className="py-4 text-sm">
-                            {order.status === 'pending' ? (
-                              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                                Pendente
-                              </Badge>
-                            ) : order.status === 'completed' ? (
-                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                Concluído
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                                Cancelado
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="py-4 text-sm">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => {
-                                  setSelectedOrder(order);
-                                  setIsOrderDetailsOpen(true);
-                                }}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              {order.status === 'pending' && (
-                                <>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                    <X className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </>
+                          <tr key={order.id} className="border-b hover:bg-gray-50">
+                            <td className="py-4 text-sm font-medium">{order.id}</td>
+                            <td className="py-4 text-sm">
+                              <div>
+                                <span className="font-medium">{order.customer}</span>
+                                <div className="text-gray-500 text-xs">{order.phone}</div>
+                              </div>
+                            </td>
+                            <td className="py-4 text-sm">
+                              {new Date(order.date).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className="py-4 text-sm font-medium">
+                              {`R$ ${(order.total / 100).toFixed(2).replace('.', ',')}`}
+                            </td>
+                            <td className="py-4 text-sm">
+                              {order.status === 'pending' ? (
+                                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                                  Pendente
+                                </Badge>
+                              ) : order.status === 'completed' ? (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  Concluído
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                                  Cancelado
+                                </Badge>
                               )}
-                            </div>
-                          </td>
-                        </tr>
+                            </td>
+                            <td className="py-4 text-sm">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => {
+                                    setSelectedOrder(order);
+                                    setIsOrderDetailsOpen(true);
+                                  }}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                {order.status === 'pending' && (
+                                  <>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <Check className="h-4 w-4 text-green-500" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <X className="h-4 w-4 text-red-500" />
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
                         ))
                       )}
                     </tbody>
@@ -1141,7 +1153,22 @@ const AdminPanel = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {realSalesHistory.length === 0 ? (
+                      {realSalesHistory
+                        .sort((a, b) => {
+                          if (historySortField === "month") {
+                            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                            const aIndex = months.indexOf(a.month);
+                            const bIndex = months.indexOf(b.month);
+                            return historySortDirection === "asc" ? aIndex - bIndex : bIndex - aIndex;
+                          } else if (historySortField === "revenue") {
+                            return historySortDirection === "asc" ? a.revenue - b.revenue : b.revenue - a.revenue;
+                          } else {
+                            return historySortDirection === "asc" 
+                              ? a.topProduct.localeCompare(b.topProduct) 
+                              : b.topProduct.localeCompare(a.topProduct);
+                          }
+                        })
+                        .length === 0 ? (
                         <tr>
                           <td colSpan={6} className="py-12 text-center text-gray-500">
                             <History className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -1191,15 +1218,15 @@ const AdminPanel = () => {
                               className="h-8 w-8 p-0"
                               onClick={() => {
                                 setSelectedOrder({
-                                  id: month.completedOrders[0]?.id || 0,
-                                  customer: month.completedOrders[0]?.customer || "Cliente",
-                                  date: month.completedOrders[0]?.date || new Date().toISOString(),
+                                  id: month.completedOrders[0].id,
+                                  customer: month.completedOrders[0].customer,
+                                  date: month.completedOrders[0].date,
                                   status: "completed",
                                   email: "cliente@exemplo.com",
                                   phone: "83 99999-9999",
-                                  total: month.completedOrders[0]?.total || 0,
+                                  total: month.completedOrders[0].total,
                                   items: [
-                                    { productId: 1, productName: month.topProduct, quantity: 1, price: month.completedOrders[0]?.total || 0 }
+                                    { productId: 1, productName: month.topProduct, quantity: 1, price: month.completedOrders[0].total }
                                   ]
                                 });
                                 setIsOrderDetailsOpen(true);
@@ -1209,7 +1236,7 @@ const AdminPanel = () => {
                             </Button>
                           </td>
                         </tr>
-                      )))}
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -1631,41 +1658,41 @@ const AdminPanel = () => {
             
             handleAddSale(saleData);
           }}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="customer">Nome do Cliente *</Label>
                   <Input id="customer" name="customer" placeholder="Nome completo" required />
-              </div>
-              <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
                   <Input id="email" name="email" type="email" placeholder="email@exemplo.com" required />
-              </div>
-              <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="phone">Telefone *</Label>
                   <Input id="phone" name="phone" placeholder="(00) 00000-0000" required />
-              </div>
-              <div className="space-y-2">
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="date">Data da Venda *</Label>
                   <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required />
-              </div>
-            </div>
-            
-            <div className="space-y-2 mt-4">
-              <div className="flex justify-between items-center">
-                  <Label>Produtos *</Label>
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  size="sm" 
-                  className="h-8"
-                  onClick={addProductToSale}
-                    disabled={!products || products.length === 0}
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Adicionar Produto
-                </Button>
+                </div>
               </div>
               
+              <div className="space-y-2 mt-4">
+                <div className="flex justify-between items-center">
+                  <Label>Produtos *</Label>
+                  <Button 
+                    variant="outline" 
+                    type="button" 
+                    size="sm" 
+                    className="h-8"
+                    onClick={addProductToSale}
+                    disabled={!products || products.length === 0}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Adicionar Produto
+                  </Button>
+                </div>
+                
                 {saleProducts.length === 0 ? (
                   <div className="border rounded-md p-8 text-center text-gray-500">
                     <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
@@ -1673,21 +1700,21 @@ const AdminPanel = () => {
                     <p className="text-sm">Clique em "Adicionar Produto" para começar</p>
                   </div>
                 ) : (
-              <div className="border rounded-md">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="p-2 text-left text-xs font-medium text-gray-500 uppercase">Produto</th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-500 uppercase">Preço</th>
-                        <th className="p-2 text-center text-xs font-medium text-gray-500 uppercase">Qtd</th>
-                        <th className="p-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
-                        <th className="p-2 w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {saleProducts.map((item, index) => (
-                        <tr key={index} className="border-b">
+                  <div className="border rounded-md">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b bg-muted/50">
+                            <th className="p-2 text-left text-xs font-medium text-gray-500 uppercase">Produto</th>
+                            <th className="p-2 text-center text-xs font-medium text-gray-500 uppercase">Preço</th>
+                            <th className="p-2 text-center text-xs font-medium text-gray-500 uppercase">Qtd</th>
+                            <th className="p-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+                            <th className="p-2 w-10"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {saleProducts.map((item, index) => (
+                            <tr key={index} className="border-b">
                               <td className="p-2">
                                 <div className="flex items-center space-x-2">
                                   <img 
@@ -1698,68 +1725,67 @@ const AdminPanel = () => {
                                   <span className="text-sm font-medium">{item.product.name}</span>
                                 </div>
                               </td>
-                          <td className="p-2 text-sm text-center">{item.product.formattedPrice}</td>
-                          <td className="p-2 text-center">
-                            <Input 
-                              type="number" 
-                              value={item.quantity}
-                              min="1" 
-                              className="h-8 w-16 text-center mx-auto"
-                              onChange={(e) => updateProductQuantity(index, parseInt(e.target.value) || 1)}
-                            />
-                          </td>
+                              <td className="p-2 text-sm text-center">{item.product.formattedPrice}</td>
+                              <td className="p-2 text-center">
+                                <Input 
+                                  type="number" 
+                                  value={item.quantity}
+                                  min="1" 
+                                  className="h-8 w-16 text-center mx-auto"
+                                  onChange={(e) => updateProductQuantity(index, parseInt(e.target.value) || 1)}
+                                />
+                              </td>
                               <td className="p-2 text-sm text-right font-medium">
-                            {`R$ ${((item.product.price * item.quantity) / 100).toFixed(2).replace('.', ',')}`}
-                          </td>
-                          <td className="p-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                                {`R$ ${((item.product.price * item.quantity) / 100).toFixed(2).replace('.', ',')}`}
+                              </td>
+                              <td className="p-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
                                   type="button"
-                              className="h-8 w-8 p-0"
-                              onClick={() => removeProductFromSale(index)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="bg-muted/50">
-                        <td colSpan={3} className="p-2 text-sm text-right font-medium">Total</td>
+                                  className="h-8 w-8 p-0"
+                                  onClick={() => removeProductFromSale(index)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="bg-muted/50">
+                            <td colSpan={3} className="p-2 text-sm text-right font-medium">Total</td>
                             <td className="p-2 text-sm text-right font-bold text-lg">
-                          {`R$ ${(saleProducts.reduce((acc, item) => {
-                            return acc + (item.product.price * item.quantity);
-                          }, 0) / 100).toFixed(2).replace('.', ',')}`}
-                        </td>
-                        <td></td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                              {`R$ ${(saleProducts.reduce((acc, item) => {
+                                return acc + (item.product.price * item.quantity);
+                              }, 0) / 100).toFixed(2).replace('.', ',')}`}
+                            </td>
+                            <td></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 )}
+              </div>
+              
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="notes">Observações</Label>
+                <Textarea id="notes" name="notes" placeholder="Observações adicionais sobre a venda..." />
+              </div>
             </div>
             
-            <div className="space-y-2 mt-4">
-              <Label htmlFor="notes">Observações</Label>
-                <Textarea id="notes" name="notes" placeholder="Observações adicionais sobre a venda..." />
-            </div>
-          </div>
-          
-          <DialogFooter>
+            <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsAddSaleOpen(false)}>
                 Cancelar
               </Button>
               <Button type="submit" disabled={saleProducts.length === 0}>
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Registrar Venda
-            </Button>
-          </DialogFooter>
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Registrar Venda
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-      
-          </div>
+    </div>
   );
 };
 

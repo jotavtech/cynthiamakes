@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
+import ImageUpload from "@/components/ui/image-upload";
 
 const productSchema = z.object({
   name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
@@ -33,7 +34,7 @@ const productSchema = z.object({
   }),
   category: z.string().min(1, "Categoria é obrigatória"),
   brand: z.string().min(1, "Marca é obrigatória"),
-  imageUrl: z.string().url("URL de imagem inválida"),
+  imageUrl: z.string().min(1, "Imagem é obrigatória"),
   videoUrl: z.string().url("URL de vídeo inválida").optional().or(z.literal("")),
   isNew: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
@@ -68,7 +69,7 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
           description: "",
           price: "",
           category: "",
-          brand: "Cynthia Beauty",
+          brand: "",
           imageUrl: "",
           videoUrl: "",
           isNew: false,
@@ -165,22 +166,15 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Marca</FormLabel>
-                <Select 
-                  onValueChange={field.onChange} 
-                  defaultValue={field.value}
-                >
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma marca" />
-                    </SelectTrigger>
+                  <Input 
+                    placeholder="Ex: MAC, Maybelline, Ruby Rose..." 
+                    {...field} 
+                  />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="Cynthia Beauty">Cynthia Beauty</SelectItem>
-                    <SelectItem value="MAC">MAC</SelectItem>
-                    <SelectItem value="Maybelline">Maybelline</SelectItem>
-                    <SelectItem value="Ruby Rose">Ruby Rose</SelectItem>
-                  </SelectContent>
-                </Select>
+                <FormDescription>
+                  Digite o nome da marca do produto
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -211,12 +205,15 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
             name="imageUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>URL da Imagem</FormLabel>
+                <FormLabel>Imagem do Produto</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://example.com/image.jpg" {...field} />
+                  <ImageUpload
+                    onImageUpload={field.onChange}
+                    currentImageUrl={field.value}
+                  />
                 </FormControl>
                 <FormDescription>
-                  Insira a URL de uma imagem do produto
+                  Selecione uma imagem do produto na sua galeria
                 </FormDescription>
                 <FormMessage />
               </FormItem>

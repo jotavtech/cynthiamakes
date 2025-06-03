@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -48,6 +48,7 @@ function App() {
   // Estado do carrinho
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItemWithProduct[]>([]);
+  const [location] = useLocation();
   
   // ID de sessão fixo
   const sessionId = '99i47ng8zigy94xt079q59';
@@ -98,7 +99,8 @@ function App() {
           <Router />
         </main>
         
-        {/* Botão flutuante do carrinho */}
+        {/* Botão flutuante do carrinho - escondido na área admin */}
+        {location !== "/admin" && (
         <button
           onClick={openCart}
           className="fixed bottom-6 right-6 bg-accent text-white p-4 rounded-full shadow-xl hover:bg-accent-dark hover:scale-110 transition-all duration-300 z-40 flex items-center justify-center"
@@ -111,6 +113,7 @@ function App() {
             </span>
           )}
         </button>
+        )}
         
         <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
         
