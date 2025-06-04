@@ -103,8 +103,8 @@ const Footer = () => {
                     className="hover:text-secondary transition"
                   >
                     {category.name}
-                  </Link>
-                </li>
+                </Link>
+              </li>
               ))}
             </ul>
           </div>

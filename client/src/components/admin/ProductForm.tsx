@@ -24,6 +24,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Brand } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 import ImageUpload from "@/components/ui/image-upload";
 
 const productSchema = z.object({
@@ -49,6 +52,11 @@ interface ProductFormProps {
 
 const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Buscar marcas disponíveis
+  const { data: brands = [] } = useQuery<Brand[]>({
+    queryKey: ["/api/brands"],
+  });
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -92,7 +100,7 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
         videoUrl: data.videoUrl || undefined, // Don't send empty string
       };
       
-      console.log("Dados do produto a serem enviados:", productData);
+
       
       await onSubmit(productData);
     } catch (error) {
@@ -174,14 +182,25 @@ const ProductForm = ({ onSubmit, initialData }: ProductFormProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Marca</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
                   <FormControl>
-                  <Input 
-                    placeholder="Ex: MAC, Maybelline, Ruby Rose..." 
-                    {...field} 
-                  />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma marca" />
+                    </SelectTrigger>
                   </FormControl>
+                  <SelectContent>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.name}>
+                        {brand.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormDescription>
-                  Digite o nome da marca do produto
+                  Selecione a marca do produto (crie marcas na aba "Marcas")
                 </FormDescription>
                 <FormMessage />
               </FormItem>

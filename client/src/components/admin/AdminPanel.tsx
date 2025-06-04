@@ -32,6 +32,7 @@ import {
   Tag
 } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useAdminSession } from "@/hooks/useAdminSession";
 import ProductForm from "./ProductForm";
 import { DisplayProduct } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { StockAdjustmentForm } from "./StockAdjustmentForm";
 import CategoryManager from "./CategoryManager";
+import BrandManager from "./BrandManager";
 
 // Tipos para o sistema de vendas
 type Order = {
@@ -104,6 +106,7 @@ const SALES_HISTORY: SalesHistoryMonth[] = [];
 
 const AdminPanel = () => {
   const { user, logout, isLoggingOut } = useAdmin();
+  const { handleApiError } = useAdminSession();
   const { toast } = useToast();
 
   // Estados para controlar os modais
@@ -287,6 +290,9 @@ const AdminPanel = () => {
     } catch (error: any) {
       console.error("Erro ao adicionar produto:", error);
       
+      // Verificar se é erro de sessão expirada
+      handleApiError(error);
+      
       let errorMessage = "Erro ao adicionar produto. Tente novamente.";
       
       if (error.message) {
@@ -308,6 +314,8 @@ const AdminPanel = () => {
   const handleEditProduct = async (data: any) => {
     if (!selectedProduct) return;
     
+
+    
     try {
       await apiRequest("PUT", `/api/products/${selectedProduct.id}`, data);
       
@@ -318,6 +326,9 @@ const AdminPanel = () => {
         description: "Produto atualizado com sucesso!",
       });
     } catch (error) {
+      // Verificar se é erro de sessão expirada
+      handleApiError(error);
+
       toast({
         title: "Erro",
         description: "Erro ao atualizar produto. Tente novamente.",
@@ -339,6 +350,9 @@ const AdminPanel = () => {
         description: "Produto excluído com sucesso!",
       });
     } catch (error) {
+      // Verificar se é erro de sessão expirada
+      handleApiError(error);
+      
       toast({
         title: "Erro",
         description: "Erro ao excluir produto. Tente novamente.",
@@ -375,6 +389,9 @@ const AdminPanel = () => {
           "Estoque reduzido com sucesso!",
       });
     } catch (error) {
+      // Verificar se é erro de sessão expirada
+      handleApiError(error);
+      
       toast({
         title: "Erro",
         description: "Erro ao ajustar o estoque. Tente novamente.",
@@ -433,14 +450,14 @@ const AdminPanel = () => {
             </>
           ) : (
             <>
-              <LogOut className="mr-2 h-4 w-4" /> Sair
+          <LogOut className="mr-2 h-4 w-4" /> Sair
             </>
           )}
         </Button>
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-6 md:w-[900px] mb-6">
+        <TabsList className="grid grid-cols-7 md:w-[1050px] mb-6">
           <TabsTrigger value="overview">
             <LayoutDashboard className="mr-2 h-4 w-4" /> Visão Geral
           </TabsTrigger>
@@ -449,6 +466,9 @@ const AdminPanel = () => {
           </TabsTrigger>
           <TabsTrigger value="categories">
             <Tag className="mr-2 h-4 w-4" /> Categorias
+          </TabsTrigger>
+          <TabsTrigger value="brands">
+            <Tag className="mr-2 h-4 w-4" /> Marcas
           </TabsTrigger>
           <TabsTrigger value="inventory">
             <Boxes className="mr-2 h-4 w-4" /> Estoque
@@ -924,6 +944,11 @@ const AdminPanel = () => {
         {/* Aba de Categorias */}
         <TabsContent value="categories">
           <CategoryManager />
+        </TabsContent>
+
+        {/* Aba de Marcas */}
+        <TabsContent value="brands">
+          <BrandManager />
         </TabsContent>
 
         {/* Aba de Vendas */}

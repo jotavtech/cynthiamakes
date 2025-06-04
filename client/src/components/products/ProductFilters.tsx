@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Category } from "@shared/schema";
+import { Category, Brand } from "@shared/schema";
 
 interface FiltersState {
   categories: string[];
@@ -29,6 +29,11 @@ const ProductFilters = ({ onFilterChange }: ProductFiltersProps) => {
   // Buscar categorias da API
   const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+  });
+
+  // Buscar marcas da API
+  const { data: brands } = useQuery<Brand[]>({
+    queryKey: ["/api/brands"],
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -167,60 +172,23 @@ const ProductFilters = ({ onFilterChange }: ProductFiltersProps) => {
         
         {expandedSections.brands && (
           <div className="space-y-2">
-            <FilterCheckbox 
-              id="brand-mac"
-              label="MAC"
-              checked={filters.brands.includes('MAC')}
-              onChange={() => handleFilterChange('brands', 'MAC')}
-            />
-            <FilterCheckbox 
-              id="brand-maybelline"
-              label="Maybelline"
-              checked={filters.brands.includes('Maybelline')}
-              onChange={() => handleFilterChange('brands', 'Maybelline')}
-            />
-            <FilterCheckbox 
-              id="brand-rubyrose"
-              label="Ruby Rose"
-              checked={filters.brands.includes('Ruby Rose')}
-              onChange={() => handleFilterChange('brands', 'Ruby Rose')}
-            />
-            <FilterCheckbox 
-              id="brand-sigma"
-              label="Sigma Beauty"
-              checked={filters.brands.includes('Sigma Beauty')}
-              onChange={() => handleFilterChange('brands', 'Sigma Beauty')}
-            />
-            <FilterCheckbox 
-              id="brand-loreal"
-              label="L'Oréal"
-              checked={filters.brands.includes('L\'Oréal')}
-              onChange={() => handleFilterChange('brands', 'L\'Oréal')}
-            />
-            <FilterCheckbox 
-              id="brand-nars"
-              label="NARS"
-              checked={filters.brands.includes('NARS')}
-              onChange={() => handleFilterChange('brands', 'NARS')}
-            />
-            <FilterCheckbox 
-              id="brand-urbandecay"
-              label="Urban Decay"
-              checked={filters.brands.includes('Urban Decay')}
-              onChange={() => handleFilterChange('brands', 'Urban Decay')}
-            />
-            <FilterCheckbox 
-              id="brand-toofaced"
-              label="Too Faced"
-              checked={filters.brands.includes('Too Faced')}
-              onChange={() => handleFilterChange('brands', 'Too Faced')}
-            />
-            <FilterCheckbox 
-              id="brand-fenty"
-              label="Fenty Beauty"
-              checked={filters.brands.includes('Fenty Beauty')}
-              onChange={() => handleFilterChange('brands', 'Fenty Beauty')}
-            />
+            {brands && brands.length > 0 ? (
+              brands
+                .filter(brand => brand.isActive)
+                .map((brand) => (
+                <FilterCheckbox 
+                  key={brand.id}
+                  id={`brand-${brand.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  label={brand.name}
+                  checked={filters.brands.includes(brand.name)}
+                  onChange={() => handleFilterChange('brands', brand.name)}
+                />
+              ))
+            ) : (
+              <div className="text-sm text-gray-500 py-2">
+                Nenhuma marca disponível
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -40,6 +40,23 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   updatedAt: true,
 });
 
+// Tabela de marcas
+export const brands = pgTable("brands", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description").default(""),
+  imageUrl: text("image_url").default(""),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertBrandSchema = createInsertSchema(brands).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Tabela de produtos
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
@@ -49,7 +66,7 @@ export const products = pgTable("products", {
   category: text("category").notNull(),
   brand: text("brand").notNull(),
   imageUrl: text("image_url").notNull().default("https://via.placeholder.com/400x400/f3f4f6/9ca3af?text=Produto"),
-  videoUrl: text("video_url").notNull().default(""),
+  videoUrl: text("video_url").notNull().default(""), 
   isNew: boolean("is_new").default(false).notNull(),
   isFeatured: boolean("is_featured").default(false).notNull(),
   stock: integer("stock").default(0).notNull(),
@@ -91,12 +108,33 @@ export const insertInventoryTransactionSchema = createInsertSchema(inventoryTran
   createdAt: true,
 });
 
+// Tabela de logs de auditoria
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  tableName: text("table_name").notNull(), // 'products', 'categories', 'brands'
+  recordId: integer("record_id").notNull(), // ID do registro modificado
+  action: text("action").notNull(), // 'created', 'updated', 'deleted'
+  oldData: jsonb("old_data"), // Dados anteriores (null para created)
+  newData: jsonb("new_data"), // Dados novos (null para deleted)
+  userId: integer("user_id").notNull(), // ID do usuário que fez a modificação
+  description: text("description").default(""), // Descrição da modificação
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Tipos TypeScript
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type Brand = typeof brands.$inferSelect;
+export type InsertBrand = z.infer<typeof insertBrandSchema>;
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -106,6 +144,9 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 
 export type InventoryTransaction = typeof inventoryTransactions.$inferSelect;
 export type InsertInventoryTransaction = z.infer<typeof insertInventoryTransactionSchema>;
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 // Tipos estendidos
 export type DisplayProduct = Product & {

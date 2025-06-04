@@ -41,6 +41,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Category, InsertCategory } from "@shared/schema";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useAdminSession } from "@/hooks/useAdminSession";
 
 const CategoryManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,6 +57,7 @@ const CategoryManager = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAdmin();
+  const { handleApiError } = useAdminSession();
 
   // Query para buscar categorias
   const { data: categories, isLoading, error } = useQuery<Category[]>({
@@ -95,6 +97,7 @@ const CategoryManager = () => {
     },
     onError: (error: any) => {
       console.error("Error creating category:", error);
+      handleApiError(error);
       toast({
         title: "Erro",
         description: "Não foi possível adicionar a categoria. Verifique se você está logado como administrador.",
@@ -123,6 +126,7 @@ const CategoryManager = () => {
     },
     onError: (error: any) => {
       console.error("Error updating category:", error);
+      handleApiError(error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar a categoria. Verifique se você está logado como administrador.",
@@ -150,6 +154,7 @@ const CategoryManager = () => {
     },
     onError: (error: any) => {
       console.error("Error deleting category:", error);
+      handleApiError(error);
       toast({
         title: "Erro",
         description: "Não foi possível remover a categoria. Verifique se você está logado como administrador.",

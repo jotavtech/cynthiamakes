@@ -46,7 +46,7 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
+      maxAge: 1000 * 60 * 10, // 10 minutos para sessão admin
     }
   };
 
@@ -132,5 +132,29 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  app.get("/api/admin/status", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ 
+        authenticated: false, 
+        message: "Sessão não encontrada" 
+      });
+    }
+    
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ 
+        authenticated: true, 
+        isAdmin: false, 
+        message: "Usuário não é administrador" 
+      });
+    }
+    
+    res.json({ 
+      authenticated: true, 
+      isAdmin: true, 
+      user: req.user,
+      sessionExpires: req.session.cookie.expires
+    });
   });
 }

@@ -10,7 +10,11 @@ import {
   InventoryTransaction,
   InsertInventoryTransaction,
   Category,
-  InsertCategory
+  InsertCategory,
+  Brand,
+  InsertBrand,
+  AuditLog,
+  InsertAuditLog
 } from "@shared/schema";
 import session from "express-session";
 import { DatabaseStorage } from "./storage-db";
@@ -30,6 +34,13 @@ export interface IStorage {
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<boolean>;
+  
+  // Brand methods
+  getBrands(): Promise<Brand[]>;
+  getBrandById(id: number): Promise<Brand | undefined>;
+  createBrand(brand: InsertBrand): Promise<Brand>;
+  updateBrand(id: number, brand: Partial<InsertBrand>): Promise<Brand | undefined>;
+  deleteBrand(id: number): Promise<boolean>;
   
   // Product methods
   getProducts(): Promise<DisplayProduct[]>;
@@ -53,6 +64,10 @@ export interface IStorage {
   updateCartItem(id: number, quantity: number): Promise<CartItem | undefined>;
   removeFromCart(id: number): Promise<boolean>;
   clearCart(sessionId: string): Promise<boolean>;
+  
+  // Audit methods
+  getAuditLogs(tableName?: string, recordId?: number, limit?: number): Promise<AuditLog[]>;
+  createAuditLog(auditLog: InsertAuditLog): Promise<AuditLog>;
 }
 
 // Format price from cents to display format (R$ 00,00)
@@ -64,26 +79,34 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private products: Map<number, Product>;
   private categories: Map<number, Category>;
+  private brands: Map<number, Brand>;
   private cartItems: Map<number, CartItem>;
   private inventoryTransactions: Map<number, InventoryTransaction>;
+  private auditLogs: Map<number, AuditLog>;
   private currentUserId: number;
   private currentProductId: number;
   private currentCategoryId: number;
+  private currentBrandId: number;
   private currentCartItemId: number;
   private currentInventoryTransactionId: number;
+  private currentAuditLogId: number;
   sessionStore: session.Store;
 
   constructor() {
     this.users = new Map();
     this.products = new Map();
     this.categories = new Map();
+    this.brands = new Map();
     this.cartItems = new Map();
     this.inventoryTransactions = new Map();
+    this.auditLogs = new Map();
     this.currentUserId = 1;
     this.currentProductId = 1;
     this.currentCategoryId = 1;
+    this.currentBrandId = 1;
     this.currentCartItemId = 1;
     this.currentInventoryTransactionId = 1;
+    this.currentAuditLogId = 1;
     
     // Create memory session store - inicializar com um store temporário
     this.sessionStore = new (session.MemoryStore)();
@@ -98,16 +121,17 @@ export class MemStorage implements IStorage {
     
     // Add admin user
     this.createUser({
-      username: "admin",
-      password: "admin123" // In a real app, this would be hashed
+      username: "admincynthia",
+      password: "@admincynthiaemaik" // In a real app, this would be hashed
     }).then(user => {
       // Update admin status
       const adminUser = { ...user, isAdmin: true };
       this.users.set(user.id, adminUser);
     });
     
-    // Add some initial products and categories
+    // Add some initial products, categories and brands
     this.seedCategories();
+    this.seedBrands();
     this.seedProducts();
   }
 
@@ -173,6 +197,51 @@ export class MemStorage implements IStorage {
 
   async deleteCategory(id: number): Promise<boolean> {
     return this.categories.delete(id);
+  }
+
+  // Brand methods
+  async getBrands(): Promise<Brand[]> {
+    return Array.from(this.brands.values());
+  }
+
+  async getBrandById(id: number): Promise<Brand | undefined> {
+    return this.brands.get(id);
+  }
+
+  async createBrand(insertBrand: InsertBrand): Promise<Brand> {
+    const id = this.currentBrandId++;
+    const now = new Date();
+    
+    const brand: Brand = {
+      id,
+      name: insertBrand.name,
+      description: insertBrand.description || "",
+      imageUrl: insertBrand.imageUrl || "",
+      isActive: insertBrand.isActive ?? true,
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    this.brands.set(id, brand);
+    return brand;
+  }
+
+  async updateBrand(id: number, updateBrand: Partial<InsertBrand>): Promise<Brand | undefined> {
+    const existingBrand = this.brands.get(id);
+    if (!existingBrand) return undefined;
+    
+    const updatedBrand: Brand = {
+      ...existingBrand,
+      ...updateBrand,
+      updatedAt: new Date()
+    };
+    
+    this.brands.set(id, updatedBrand);
+    return updatedBrand;
+  }
+
+  async deleteBrand(id: number): Promise<boolean> {
+    return this.brands.delete(id);
   }
 
   // Product methods
@@ -397,115 +466,93 @@ export class MemStorage implements IStorage {
     return true;
   }
 
+  // Audit methods
+  async getAuditLogs(tableName?: string, recordId?: number, limit: number = 50): Promise<AuditLog[]> {
+    let logs = Array.from(this.auditLogs.values());
+    
+    if (tableName) {
+      logs = logs.filter(log => log.tableName === tableName);
+    }
+    
+    if (recordId) {
+      logs = logs.filter(log => log.recordId === recordId);
+    }
+    
+    return logs
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async createAuditLog(insertAuditLog: InsertAuditLog): Promise<AuditLog> {
+    const id = this.currentAuditLogId++;
+    const auditLog: AuditLog = {
+      id,
+      tableName: insertAuditLog.tableName,
+      recordId: insertAuditLog.recordId,
+      action: insertAuditLog.action,
+      oldData: insertAuditLog.oldData,
+      newData: insertAuditLog.newData,
+      userId: insertAuditLog.userId,
+      description: insertAuditLog.description || "",
+      createdAt: new Date()
+    };
+    
+    this.auditLogs.set(id, auditLog);
+    return auditLog;
+  }
+
   // Seed initial products
   private async seedProducts() {
     const initialProducts: InsertProduct[] = [
       {
-        name: "Base Líquida Ultra HD",
-        description: "Base de alta cobertura com acabamento natural, ideal para peles normais a secas.",
-        price: 8990, // R$ 89,90
+        name: "Base Líquida Hidratante",
+        description: "Base de cobertura natural com proteção solar, ideal para uso diário.",
+        price: 4500, // R$ 45,00
         category: "face",
-        brand: "MAC",
+        brand: "Marca A",
         imageUrl: "https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=500&q=80",
-        isNew: true,
-        isFeatured: false,
-        stock: 45,
-        lowStockThreshold: 10,
-        sku: "BASE-HD-001"
-      },
-      {
-        name: "Paleta de Sombras Colorful",
-        description: "Paleta com 12 cores altamente pigmentadas, com acabamentos matte e shimmer.",
-        price: 12990, // R$ 129,90
-        category: "eyes",
-        brand: "Maybelline",
-        imageUrl: "https://pixabay.com/get/g30a89816ea1c2b83d0bf92e96f89d762568a8bf4f211be224d1c9b4e645e88bc80a858480604b2afd0fd94a1d5b5062f5f4f3e51dd9f427e1894c659ade5f25a_1280.jpg",
         isNew: false,
         isFeatured: false,
-        stock: 18,
+        stock: 25,
         lowStockThreshold: 5,
-        sku: "PALETTE-COL-002"
+        sku: "BASE-001"
       },
       {
-        name: "Batom Matte Longa Duração",
-        description: "Batom de longa duração com acabamento matte e textura cremosa que não resseca os lábios.",
-        price: 4590, // R$ 45,90
+        name: "Batom Cremoso",
+        description: "Batom cremoso de longa duração com acabamento acetinado.",
+        price: 2800, // R$ 28,00
         category: "lips",
-        brand: "Ruby Rose",
+        brand: "Marca B",
         imageUrl: "https://pixabay.com/get/gaf98a7f448dc320934892b79c7238885f0a1289f295b5a29ec26c6563e5d403dd2f8ea00be4927a4034d22c34941048fb9c5f62ee56ae9a4b99aadd1c7eb7129_1280.jpg",
-        isNew: false,
-        isFeatured: true,
-        stock: 3,
-        lowStockThreshold: 5,
-        sku: "LIPSTICK-MAT-003"
-      },
-      {
-        name: "Kit de Pincéis Profissionais",
-        description: "Kit com 12 pincéis profissionais para maquiagem completa, com cerdas sintéticas de alta qualidade.",
-        price: 19990, // R$ 199,90
-        category: "accessories",
-        brand: "Sigma Beauty",
-        imageUrl: "https://pixabay.com/get/gd526e95c82444b43af92cf85cb8947b12e2ca7b9b29fbc301498f8064e88df85613583172ed66b1ad35a6484d7fb63ab3334bb34c94310931992337175b588bd_1280.jpg",
-        isNew: false,
-        isFeatured: false,
-        stock: 0,
-        lowStockThreshold: 5,
-        sku: "BRUSH-KIT-004"
-      },
-      {
-        name: "Máscara para Cílios Volume Extreme",
-        description: "Máscara para cílios de volume extremo, à prova d'água e longa duração.",
-        price: 7590, // R$ 75,90
-        category: "eyes",
-        brand: "L'Oréal",
-        imageUrl: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=500&q=80",
-        isNew: false,
-        isFeatured: false
-      },
-      {
-        name: "Iluminador Gold Glow",
-        description: "Iluminador em pó com acabamento dourado que proporciona um brilho natural à pele.",
-        price: 6990, // R$ 69,90
-        category: "face",
-        brand: "NARS",
-        imageUrl: "https://images.unsplash.com/photo-1591375372156-542495912da9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=500&q=80",
         isNew: true,
-        isFeatured: false
-      },
-      {
-        name: "Base Premium Gold",
-        description: "Nossa base mais vendida, com cobertura média a alta e acabamento natural.",
-        price: 11990, // R$ 119,90
-        category: "face",
-        brand: "Urban Decay",
-        imageUrl: "https://pixabay.com/get/g77746cb48f7952b6b4f637df5e2bfc1334981d9b98a82ae0d6b6c6c4f4b7aa4807a591c37f2df4c79bfe3e0445c7891935986d2707d6fe3d52a640ed4f4bd711_1280.jpg",
-        isNew: false,
-        isFeatured: true
-      },
-      {
-        name: "Paleta de Sombras Sunset",
-        description: "18 cores inspiradas no pôr do sol, altamente pigmentadas e fáceis de aplicar.",
-        price: 14990, // R$ 149,90
-        category: "eyes",
-        brand: "Too Faced",
-        imageUrl: "https://pixabay.com/get/gf0fb7fc1bd67bb986daaa8dd41eee373994a1ac67e01d761c3b0562ed52e8eb364f5d1ce1a466e58a2f3506436a3e79033d1e03b59fae40fb738c5fd69a86eb0_1280.jpg",
-        isNew: false,
-        isFeatured: true
-      },
-      {
-        name: "Kit Completo para Lábios",
-        description: "4 batons e 2 glosses em cores versáteis para todos os momentos.",
-        price: 19990, // R$ 199,90
-        category: "lips",
-        brand: "Fenty Beauty",
-        imageUrl: "https://images.unsplash.com/photo-1594125311687-3b1b3eafa9f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400&q=80",
-        isNew: false,
-        isFeatured: true
+        isFeatured: true,
+        stock: 15,
+        lowStockThreshold: 5,
+        sku: "BATOM-001"
       }
     ];
     
     for (const product of initialProducts) {
       await this.createProduct(product);
+    }
+  }
+
+  private async seedBrands() {
+    const initialBrands: InsertBrand[] = [
+      {
+        name: "Marca A",
+        description: "Uma marca confiável de cosméticos",
+        isActive: true
+      },
+      {
+        name: "Marca B", 
+        description: "Produtos de qualidade premium",
+        isActive: true
+      }
+    ];
+
+    for (const brandData of initialBrands) {
+      await this.createBrand(brandData);
     }
   }
 
@@ -555,6 +602,6 @@ export class MemStorage implements IStorage {
 }
 
 // Use o armazenamento apropriado baseado no ambiente
-export const storage = process.env.NODE_ENV === "development" || process.env.FORCE_MEMORY_STORAGE === "true" 
-  ? new MemStorage() 
-  : new DatabaseStorage();
+export const storage = process.env.DATABASE_URL && process.env.FORCE_MEMORY_STORAGE !== "true"
+  ? new DatabaseStorage() 
+  : new MemStorage();

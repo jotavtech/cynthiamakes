@@ -23,6 +23,7 @@ const ImageUpload = ({ onImageUpload, currentImageUrl, className }: ImageUploadP
   };
 
   const handleManualUrlInput = (url: string) => {
+
     setPreviewUrl(url);
     onImageUpload(url);
     setError("");
@@ -49,6 +50,7 @@ const ImageUpload = ({ onImageUpload, currentImageUrl, className }: ImageUploadP
       // Limpar preview local e usar URL do Cloudinary
       URL.revokeObjectURL(localPreviewUrl);
       setPreviewUrl(imageUrl);
+
       onImageUpload(imageUrl);
 
     } catch (error) {

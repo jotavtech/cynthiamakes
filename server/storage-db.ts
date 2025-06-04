@@ -11,11 +11,17 @@ import {
   InsertInventoryTransaction,
   Category,
   InsertCategory,
+  Brand,
+  InsertBrand,
+  AuditLog,
+  InsertAuditLog,
   users,
   products,
   categories,
+  brands,
   cartItems,
-  inventoryTransactions
+  inventoryTransactions,
+  auditLogs
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -90,6 +96,45 @@ export class DatabaseStorage implements IStorage {
       .delete(categories)
       .where(eq(categories.id, id))
       .returning({ id: categories.id });
+    
+    return result.length > 0;
+  }
+
+  // Métodos de marca
+  async getBrands(): Promise<Brand[]> {
+    const allBrands = await db.select().from(brands);
+    return allBrands;
+  }
+
+  async getBrandById(id: number): Promise<Brand | undefined> {
+    const [brand] = await db.select().from(brands).where(eq(brands.id, id));
+    return brand;
+  }
+
+  async createBrand(insertBrand: InsertBrand): Promise<Brand> {
+    const [brand] = await db
+      .insert(brands)
+      .values(insertBrand)
+      .returning();
+    
+    return brand;
+  }
+
+  async updateBrand(id: number, updateData: Partial<InsertBrand>): Promise<Brand | undefined> {
+    const [brand] = await db
+      .update(brands)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(brands.id, id))
+      .returning();
+    
+    return brand;
+  }
+
+  async deleteBrand(id: number): Promise<boolean> {
+    const result = await db
+      .delete(brands)
+      .where(eq(brands.id, id))
+      .returning({ id: brands.id });
     
     return result.length > 0;
   }
@@ -347,6 +392,45 @@ export class DatabaseStorage implements IStorage {
       .returning();
       
     return newTransaction;
+  }
+
+  // Métodos de auditoria
+  async getAuditLogs(tableName?: string, recordId?: number, limit: number = 50): Promise<AuditLog[]> {
+    // Constrói as condições da query
+    const conditions = [];
+    if (tableName) {
+      conditions.push(eq(auditLogs.tableName, tableName));
+    }
+    if (recordId) {
+      conditions.push(eq(auditLogs.recordId, recordId));
+    }
+    
+    let logs;
+    if (conditions.length > 0) {
+      logs = await db
+        .select()
+        .from(auditLogs)
+        .where(and(...conditions))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(limit);
+    } else {
+      logs = await db
+        .select()
+        .from(auditLogs)
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(limit);
+    }
+    
+    return logs;
+  }
+
+  async createAuditLog(insertAuditLog: InsertAuditLog): Promise<AuditLog> {
+    const [auditLog] = await db
+      .insert(auditLogs)
+      .values(insertAuditLog)
+      .returning();
+    
+    return auditLog;
   }
 
   // Métodos auxiliares
