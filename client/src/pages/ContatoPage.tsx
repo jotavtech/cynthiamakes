@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Phone, Mail, MapPin, Send, MessageCircle } from "lucide-react";
+import { Phone, Mail, MapPin, Send } from "lucide-react";
 
 const formSchema = z.object({
   nome: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
@@ -71,11 +71,6 @@ const ContatoPage = () => {
     }
   };
 
-  const handleDirectWhatsApp = () => {
-    const message = "Olá! Vim pelo site cynthiamakes e gostaria de mais informações sobre os produtos.";
-    sendWhatsAppMessage(message);
-  };
-
   return (
     <>
       <Helmet>
@@ -109,7 +104,6 @@ const ContatoPage = () => {
                   <Mail className="h-5 w-5 text-accent mr-3 mt-1" />
                   <div>
                     <h3 className="font-medium">Email</h3>
-                    <p className="text-gray-700">contato@cynthiamakeup.com</p>
                     <p className="text-sm text-gray-500">Respondemos em até 24 horas</p>
                   </div>
                 </div>
@@ -122,17 +116,6 @@ const ContatoPage = () => {
                     <p className="text-gray-700">Mamanguape, CEP 58280-000</p>
                   </div>
                 </div>
-              </div>
-              
-              {/* Botão direto para WhatsApp */}
-              <div className="mt-6">
-                <Button 
-                  onClick={handleDirectWhatsApp}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
-                >
-                  <MessageCircle className="mr-2 h-4 w-4" />
-                  Falar pelo WhatsApp
-                </Button>
               </div>
               
               <div className="mt-8">

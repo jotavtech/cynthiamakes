@@ -11,7 +11,6 @@ import CartPage from "@/pages/CartPage";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/layout/CartDrawer";
-import WhatsAppButton from "@/components/ui/WhatsAppButton";
 import { useState, useEffect, createContext } from "react";
 import { CartItemWithProduct } from "@shared/schema";
 import { ShoppingBag } from "lucide-react";
@@ -104,7 +103,7 @@ function App() {
         {location !== "/admin" && (
         <button
           onClick={openCart}
-          className="fixed bottom-6 right-20 bg-accent text-white p-4 rounded-full shadow-xl hover:bg-accent-dark hover:scale-110 transition-all duration-300 z-40 flex items-center justify-center"
+          className="fixed bottom-6 right-6 bg-accent text-white p-4 rounded-full shadow-xl hover:bg-accent-dark hover:scale-110 transition-all duration-300 z-40 flex items-center justify-center"
           aria-label="Abrir carrinho"
         >
           <ShoppingBag className="h-6 w-6" />
@@ -115,9 +114,6 @@ function App() {
           )}
         </button>
         )}
-        
-        {/* Botão flutuante do WhatsApp - escondido na área admin */}
-        {location !== "/admin" && <WhatsAppButton />}
         
         <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
         
