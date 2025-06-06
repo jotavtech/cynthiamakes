@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { formatContactMessage, sendWhatsAppMessage } from "@/lib/whatsapp";
 import {
   Form,
   FormControl,
@@ -44,25 +43,20 @@ const ContatoPage = () => {
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      // Formatar a mensagem para o WhatsApp
-      const message = formatContactMessage(values);
-      
-      console.log("Enviando mensagem para WhatsApp:", message);
-      
-      // Enviar para WhatsApp usando o número configurado
-      sendWhatsAppMessage(message);
+      // Redirecionar para o link específico do WhatsApp
+      window.open('https://api.whatsapp.com/send/?phone=558388382886&text&type=phone_number&app_absent=0', '_blank');
       
       toast({
-        title: "Mensagem enviada!",
-        description: "Sua mensagem foi enviada para o WhatsApp da Cynthia Makeup.",
+        title: "Redirecionando para WhatsApp!",
+        description: "Você será redirecionado para o WhatsApp da Cynthia Makeup.",
       });
       
       // Resetar o formulário após envio
       form.reset();
     } catch (error) {
-      console.error("Erro ao enviar para o WhatsApp:", error);
+      console.error("Erro ao abrir WhatsApp:", error);
       toast({
-        title: "Erro ao enviar mensagem",
+        title: "Erro ao abrir WhatsApp",
         description: "Por favor, tente novamente mais tarde.",
         variant: "destructive",
       });
