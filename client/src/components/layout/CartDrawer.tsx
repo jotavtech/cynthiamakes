@@ -1,5 +1,5 @@
 import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-import { formatWhatsAppMessage, generateWhatsAppURL } from "@/lib/utils";
+import { formatWhatsAppMessage, sendWhatsAppMessage } from "@/lib/whatsapp";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { CartItemWithProduct } from "@shared/schema";
@@ -123,17 +123,11 @@ const CartDrawer = ({ isOpen, onClose }: CartDrawerProps) => {
     if (cartItems.length === 0) return;
     
     try {
-      // Número de telefone da Cynthia Makeup (conforme solicitado)
-      const PHONE_NUMBER = "83993187473";
-      
       // Criar mensagem para WhatsApp
       const message = formatWhatsAppMessage(cartItems);
       
-      // Gerar URL do WhatsApp
-      const whatsappUrl = generateWhatsAppURL(PHONE_NUMBER, message);
-      
-      // Abrir WhatsApp
-      window.open(whatsappUrl, '_blank');
+      // Enviar para WhatsApp usando o número configurado
+      sendWhatsAppMessage(message);
       
       // Limpar carrinho após checkout
       clearCart();

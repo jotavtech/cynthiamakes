@@ -20,7 +20,7 @@ const SobrePage = () => {
                 Nossa História
               </h2>
               <p className="mb-4 text-gray-700">
-                A Cynthia Makeup nasceu em 2018 da paixão de Cynthia Santos pela maquiagem e pelo poder transformador que ela tem na vida das pessoas. 
+                A Cynthia Makeup nasceu da paixão de Cynthia Santos pela maquiagem e pelo poder transformador que ela tem na vida das pessoas. 
                 O que começou como um pequeno negócio em casa, rapidamente cresceu para se tornar uma das mais queridas lojas de cosméticos do país.
               </p>
               <p className="mb-4 text-gray-700">
@@ -51,7 +51,6 @@ const SobrePage = () => {
               <ul className="list-disc pl-5 space-y-2 text-gray-700">
                 <li><strong>Qualidade:</strong> Buscamos sempre os melhores produtos e fórmulas para nossos clientes.</li>
                 <li><strong>Inclusão:</strong> Acreditamos que a maquiagem é para todos, sem exceção.</li>
-                <li><strong>Sustentabilidade:</strong> Trabalhamos para reduzir nosso impacto ambiental, escolhendo produtos e embalagens mais sustentáveis.</li>
                 <li><strong>Atendimento:</strong> Nos dedicamos a oferecer uma experiência personalizada e atenciosa.</li>
                 <li><strong>Inovação:</strong> Estamos sempre atualizados com as tendências e novidades do mundo da maquiagem.</li>
               </ul>

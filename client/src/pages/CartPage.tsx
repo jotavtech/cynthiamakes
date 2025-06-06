@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, ShoppingBag, MinusCircle, PlusCircle, ArrowLeft, Send } from "lucide-react";
-import { formatWhatsAppMessage } from "@/lib/utils";
+import { formatWhatsAppMessage, sendWhatsAppMessage } from "@/lib/whatsapp";
 
 const CartPage = () => {
   const { cartItems, updateCartItemQuantity, removeFromCart, clearCart } = useCart();
@@ -31,14 +31,10 @@ const CartPage = () => {
     
     try {
       // Formatar mensagem para WhatsApp
-      const phoneNumber = "5583993187473"; // Número fixo para o WhatsApp da loja
       const message = formatWhatsAppMessage(cartItems);
       
-      // Criar URL para WhatsApp
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-      
-      // Abrir WhatsApp em nova aba
-      window.open(whatsappUrl, '_blank');
+      // Enviar para WhatsApp usando o número configurado
+      sendWhatsAppMessage(message);
     } catch (error) {
       console.error("Erro ao enviar para WhatsApp:", error);
     } finally {

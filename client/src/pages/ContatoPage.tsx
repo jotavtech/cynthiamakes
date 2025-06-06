@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { generateWhatsAppURL } from "@/lib/utils";
+import { formatContactMessage, sendWhatsAppMessage } from "@/lib/whatsapp";
 import {
   Form,
   FormControl,
@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Phone, Mail, MapPin, Send } from "lucide-react";
+import { Phone, Mail, MapPin, Send, MessageCircle } from "lucide-react";
 
 const formSchema = z.object({
   nome: z.string().min(2, "O nome deve ter pelo menos 2 caracteres"),
@@ -30,9 +30,6 @@ type FormValues = z.infer<typeof formSchema>;
 const ContatoPage = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Número de telefone da Cynthia Makeup (conforme solicitado)
-  const PHONE_NUMBER = "83993187473";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,22 +45,12 @@ const ContatoPage = () => {
     setIsSubmitting(true);
     try {
       // Formatar a mensagem para o WhatsApp
-      const message = `
-*Contato pelo site Cynthia Makeup*
-
-*Nome:* ${values.nome}
-*Email:* ${values.email}
-*Telefone:* ${values.telefone}
-
-*Mensagem:*
-${values.mensagem}
-      `;
+      const message = formatContactMessage(values);
       
       console.log("Enviando mensagem para WhatsApp:", message);
       
-      // Gerar URL do WhatsApp com a mensagem e abrir em nova aba
-      const whatsappUrl = generateWhatsAppURL(PHONE_NUMBER, message);
-      window.open(whatsappUrl, '_blank');
+      // Enviar para WhatsApp usando o número configurado
+      sendWhatsAppMessage(message);
       
       toast({
         title: "Mensagem enviada!",
@@ -82,6 +69,11 @@ ${values.mensagem}
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDirectWhatsApp = () => {
+    const message = "Olá! Vim pelo site cynthiamakes e gostaria de mais informações sobre os produtos.";
+    sendWhatsAppMessage(message);
   };
 
   return (
@@ -109,8 +101,7 @@ ${values.mensagem}
                   <Phone className="h-5 w-5 text-accent mr-3 mt-1" />
                   <div>
                     <h3 className="font-medium">Telefone</h3>
-                    <p className="text-gray-700">(83) 99318-7473</p>
-                    <p className="text-sm text-gray-500">Segunda a Sexta, 09:00 - 18:00</p>
+                    <p className="text-gray-700">+55 83 98838-2886</p>
                   </div>
                 </div>
                 
@@ -127,10 +118,21 @@ ${values.mensagem}
                   <MapPin className="h-5 w-5 text-accent mr-3 mt-1" />
                   <div>
                     <h3 className="font-medium">Endereço</h3>
-                    <p className="text-gray-700">Av. Epitácio Pessoa, 1234</p>
-                    <p className="text-gray-700">João Pessoa, PB - CEP 58030-000</p>
+                    <p className="text-gray-700">Rua Dom Vital, S/N</p>
+                    <p className="text-gray-700">Mamanguape, CEP 58280-000</p>
                   </div>
                 </div>
+              </div>
+              
+              {/* Botão direto para WhatsApp */}
+              <div className="mt-6">
+                <Button 
+                  onClick={handleDirectWhatsApp}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white"
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Falar pelo WhatsApp
+                </Button>
               </div>
               
               <div className="mt-8">
@@ -171,20 +173,6 @@ ${values.mensagem}
                         <FormLabel>Nome completo</FormLabel>
                         <FormControl>
                           <Input placeholder="Seu nome completo" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="seu@email.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
