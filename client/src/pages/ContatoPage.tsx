@@ -28,7 +28,6 @@ type FormValues = z.infer<typeof formSchema>;
 
 const ContatoPage = () => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -40,29 +39,14 @@ const ContatoPage = () => {
     },
   });
 
-  const onSubmit = async (values: FormValues) => {
-    setIsSubmitting(true);
-    try {
-      // Redirecionar para o link específico do WhatsApp
-      window.open('https://api.whatsapp.com/send/?phone=558388382886&text&type=phone_number&app_absent=0', '_blank');
-      
-      toast({
-        title: "Redirecionando para WhatsApp!",
-        description: "Você será redirecionado para o WhatsApp da Cynthia Makeup.",
-      });
-      
-      // Resetar o formulário após envio
-      form.reset();
-    } catch (error) {
-      console.error("Erro ao abrir WhatsApp:", error);
-      toast({
-        title: "Erro ao abrir WhatsApp",
-        description: "Por favor, tente novamente mais tarde.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleWhatsAppRedirect = () => {
+    // Redirecionar diretamente para o link do WhatsApp
+    window.open('https://api.whatsapp.com/send/?phone=558388382886&text&type=phone_number&app_absent=0', '_blank');
+    
+    toast({
+      title: "Redirecionando para WhatsApp!",
+      description: "Você será redirecionado para o WhatsApp da Cynthia Makeup.",
+    });
   };
 
   return (
@@ -141,7 +125,7 @@ const ContatoPage = () => {
               </h2>
               
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form className="space-y-4">
                   <FormField
                     control={form.control}
                     name="nome"
@@ -189,23 +173,11 @@ const ContatoPage = () => {
                   />
                   
                   <Button 
-                    type="submit" 
+                    type="button"
+                    onClick={handleWhatsAppRedirect}
                     className="w-full"
-                    disabled={isSubmitting}
                   >
-                    {isSubmitting ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Enviando...
-                      </span>
-                    ) : (
-                      <span className="flex items-center">
-                        <Send className="mr-2 h-4 w-4" /> Enviar Mensagem
-                      </span>
-                    )}
+                    <Send className="mr-2 h-4 w-4" /> Enviar Mensagem
                   </Button>
                 </form>
               </Form>
