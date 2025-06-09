@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Cynthia Makeup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Servidor Funcionando!</h1>
+        <p>Se você vê esta mensagem, o servidor está funcionando corretamente.</p>
+        <p>Data/Hora: <span id="datetime"></span></p>
+        
+        <h2>Próximos Passos:</h2>
+        <ol style="text-align: left;">
+            <li>Fazer upload dos arquivos corretos</li>
+            <li>Configurar o .htaccess</li>
+            <li>Verificar as permissões dos arquivos</li>
+        </ol>
+    </div>
+    
+    <script>
+        document.getElementById('datetime').textContent = new Date().toLocaleString('pt-BR');
+    </script>
+</body>
+</html> 
