@@ -1,12 +1,12 @@
 export const CLOUDINARY_CONFIG = {
-  cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'demo',
-  uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_default',
+  cloudName: 'dzwfuzxxw',
+  uploadPreset: 'ml_default',
 };
 
 export const uploadImageToCloudinary = async (file: File): Promise<string> => {
   // Verificar se as configurações estão disponíveis
-  if (!CLOUDINARY_CONFIG.cloudName || CLOUDINARY_CONFIG.cloudName === 'your-cloud-name') {
-    throw new Error('Configuração do Cloudinary não encontrada. Verifique o arquivo CLOUDINARY_SETUP.md');
+  if (!CLOUDINARY_CONFIG.cloudName) {
+    throw new Error('Configuração do Cloudinary não encontrada');
   }
 
   const formData = new FormData();
@@ -72,7 +72,6 @@ export const isValidImageFile = (file: File): boolean => {
 export const isCloudinaryConfigured = (): boolean => {
   return !!(
     CLOUDINARY_CONFIG.cloudName && 
-    CLOUDINARY_CONFIG.cloudName !== 'your-cloud-name' &&
     CLOUDINARY_CONFIG.cloudName !== 'demo'
   );
 }; 

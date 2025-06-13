@@ -7,6 +7,15 @@ import { setupAuth } from "./auth";
 import { AuditLogger } from "./audit";
 import multer from "multer";
 import path from "path";
+import { v2 as cloudinary } from 'cloudinary';
+
+// Configuração do Cloudinary
+cloudinary.config({
+  cloud_name: 'dzwfuzxxw',
+  api_key: '888348989441951',
+  api_secret: 'SoIbMkMvEBoth_Xbt0I8Ew96JuY',
+  secure: true
+});
 
 // Configuração do multer para upload de arquivos
 const upload = multer({
@@ -57,16 +66,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Nenhum arquivo enviado" });
       }
 
-      // Por simplicidade, vamos retornar uma URL base64 da imagem
-      // Em produção, você enviaria para um serviço como Cloudinary, AWS S3, etc.
-      const base64 = req.file.buffer.toString('base64');
-      const dataUrl = `data:${req.file.mimetype};base64,${base64}`;
-      
-      // Simular processamento
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Converter o buffer para base64
+      const base64Image = req.file.buffer.toString('base64');
+      const dataURI = `data:${req.file.mimetype};base64,${base64Image}`;
+
+      // Upload para o Cloudinary
+      const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload(dataURI, {
+          folder: 'products',
+          resource_type: 'auto'
+        }, (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        });
+      });
       
       res.json({
-        url: dataUrl,
+        url: result.secure_url,
+        public_id: result.public_id,
         filename: req.file.originalname,
         size: req.file.size,
         mimetype: req.file.mimetype
