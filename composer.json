@@ -1,0 +1,13 @@
+{
+    "name": "cynthiamakes/website",
+    "description": "Cynthia Makes Website",
+    "type": "project",
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+} 

@@ -1,9 +1,13 @@
 RewriteEngine On
 
-# Handle client-side routing for React
+# Redirecionar chamadas da API para o backend
+RewriteCond %{REQUEST_URI} ^/api/
+RewriteRule ^api/(.*)$ http://cynthiamakes1.com.br:5000/api/$1 [P,L]
+
+# Se o arquivo ou diretório não existir, redirecionar para index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+RewriteRule ^(.*)$ index.php [L,QSA]
 
 # Set proper MIME types
 AddType application/javascript .js
@@ -27,6 +31,9 @@ AddType text/css .css
     Header always set X-Content-Type-Options nosniff
     Header always set X-Frame-Options DENY
     Header always set X-XSS-Protection "1; mode=block"
+    Header always set Access-Control-Allow-Origin "https://cynthiamakes1.com.br"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
 </IfModule>
 
 # Cache control

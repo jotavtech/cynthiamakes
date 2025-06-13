@@ -28,4 +28,15 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
+  server: {
+    host: '0.0.0.0',
+    port: 5000,
+    proxy: {
+      '/api': {
+        target: 'https://cynthiamakes1.com.br',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  }
 });
