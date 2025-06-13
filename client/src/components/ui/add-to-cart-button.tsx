@@ -16,6 +16,11 @@ interface AddToCartButtonProps {
   openCartDrawer: () => void;
 }
 
+const BASE_API_URL =
+  import.meta.env.PROD
+    ? "https://cynthiamakes1.com.br/api"
+    : "/api";
+
 export function AddToCartButton({
   productId,
   productName,
@@ -42,7 +47,7 @@ export function AddToCartButton({
     
     try {
       // Verificar se o item já existe no carrinho
-      const cartResponse = await fetch(`/api/cart/${sessionId}`);
+      const cartResponse = await fetch(`${BASE_API_URL}/cart/${sessionId}`);
       const cartItems = await cartResponse.json();
       const existingItem = cartItems.find((item: { productId: number }) => item.productId === productId);
       
@@ -51,14 +56,14 @@ export function AddToCartButton({
       if (existingItem) {
         // Se o item já existe, atualizar a quantidade
         const newQuantity = existingItem.quantity + quantity;
-        response = await fetch(`/api/cart/${existingItem.id}`, {
+        response = await fetch(`${BASE_API_URL}/cart/${existingItem.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ quantity: newQuantity })
         });
       } else {
         // Se o item não existe, adicioná-lo
-        response = await fetch('/api/cart', {
+        response = await fetch(`${BASE_API_URL}/cart`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

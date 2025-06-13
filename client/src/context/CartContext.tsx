@@ -9,6 +9,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { getActiveSessionId } from "@/lib/sessionManager";
 import { CartItemWithProduct } from "@shared/schema";
 
+const BASE_API_URL =
+  import.meta.env.PROD
+    ? "https://cynthiamakes1.com.br/api"
+    : "/api";
+
 interface CartContextType {
   cartItems: CartItemWithProduct[];
   isLoading: boolean;
@@ -60,7 +65,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     setIsLoading(true);
     try {
       // Fazer requisição para a API
-      const response = await fetch(`/api/cart/${sessionId}`);
+      const response = await fetch(`${BASE_API_URL}/cart/${sessionId}`);
       if (!response.ok) {
         console.error("Falha ao buscar carrinho:", response.status, response.statusText);
         throw new Error("Falha ao buscar carrinho");
@@ -97,7 +102,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         // Atualizar a quantidade em vez de adicionar novamente
         const newQuantity = existingItem.quantity + quantity;
         
-        const updateResponse = await fetch(`/api/cart/${existingItem.id}`, {
+        const updateResponse = await fetch(`${BASE_API_URL}/cart/${existingItem.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -116,7 +121,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
         // Adicionar novo item ao carrinho
         console.log(`[CartContext] Adicionando novo produto ${productId} ao carrinho`);
         
-        const addResponse = await fetch("/api/cart", {
+        const addResponse = await fetch(`${BASE_API_URL}/cart`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -159,7 +164,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     console.log(`Atualizando quantidade do item ${cartItemId} para ${quantity}`);
     
     try {
-      const response = await fetch(`/api/cart/${cartItemId}`, {
+      const response = await fetch(`${BASE_API_URL}/cart/${cartItemId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -190,7 +195,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     console.log(`Removendo item ${cartItemId} do carrinho`);
     
     try {
-      const response = await fetch(`/api/cart/${cartItemId}`, {
+      const response = await fetch(`${BASE_API_URL}/cart/${cartItemId}`, {
         method: "DELETE",
       });
       
@@ -217,7 +222,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
     console.log(`Limpando todos os itens do carrinho para a sessão ${sessionId}`);
     
     try {
-      const response = await fetch(`/api/cart/clear/${sessionId}`, {
+      const response = await fetch(`${BASE_API_URL}/cart/clear/${sessionId}`, {
         method: "DELETE",
       });
       
