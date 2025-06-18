@@ -329,16 +329,13 @@ const CategoryManager = () => {
               </p>
             </div>
             <div className="flex space-x-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  type="search"
-                  placeholder="Buscar categorias..."
-                  className="pl-8 w-full md:w-[250px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <Input
+                type="search"
+                placeholder="Buscar categorias..."
+                className="w-full md:w-[250px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               <Button 
                 onClick={() => setIsAddOpen(true)}
                 disabled={!user || !user.isAdmin}

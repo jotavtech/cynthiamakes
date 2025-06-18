@@ -67,6 +67,7 @@ import { Badge } from "@/components/ui/badge";
 import { StockAdjustmentForm } from "./StockAdjustmentForm";
 import CategoryManager from "./CategoryManager";
 import BrandManager from "./BrandManager";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Tipos para o sistema de vendas
 type Order = {
@@ -132,6 +133,10 @@ const AdminPanel = () => {
   const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],
   });
+
+  const { data: adminProducts } = useQuery<DisplayProduct[]>({
+    queryKey: ["/api/products/admin"],
+  });
   
   const filteredProducts = products?.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -145,25 +150,18 @@ const AdminPanel = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
   const [isAddSaleOpen, setIsAddSaleOpen] = useState(false);
+  const [isProductSelectionOpen, setIsProductSelectionOpen] = useState(false);
   const [historySortField, setHistorySortField] = useState("month");
   const [historySortDirection, setHistorySortDirection] = useState<"asc" | "desc">("desc");
-  const [saleProducts, setSaleProducts] = useState<{product: DisplayProduct, quantity: number}[]>([]);
+  const [saleProducts, setSaleProducts] = useState<Array<{ product: DisplayProduct; quantity: number }>>([]);
   
   // Inicializar produtos quando o modal de adicionar venda é aberto
   useEffect(() => {
-    if (isAddSaleOpen && products && products.length > 0 && saleProducts.length === 0) {
-      // Inicializa com produtos de exemplo
-      const initialProducts = [];
-      if (products.length > 0) initialProducts.push({ product: products[0], quantity: 1 });
-      if (products.length > 1) initialProducts.push({ product: products[1], quantity: 1 });
-      setSaleProducts(initialProducts);
-    }
-    
     // Limpar produtos quando o modal for fechado
     if (!isAddSaleOpen) {
       setSaleProducts([]);
     }
-  }, [isAddSaleOpen, products]);
+  }, [isAddSaleOpen]);
   
   // Função para remover produto da venda
   const removeProductFromSale = (index: number) => {
@@ -176,9 +174,13 @@ const AdminPanel = () => {
   
   // Função para adicionar produto à venda
   const addProductToSale = () => {
-    if (products && products.length > 0) {
-      setSaleProducts(prev => [...prev, { product: products[0], quantity: 1 }]);
-    }
+    setIsProductSelectionOpen(true);
+  };
+
+  // Função para selecionar produto do modal
+  const selectProductForSale = (product: DisplayProduct) => {
+    setSaleProducts(prev => [...prev, { product, quantity: 1 }]);
+    setIsProductSelectionOpen(false);
   };
   
   // Função para atualizar a quantidade de um produto
@@ -274,15 +276,31 @@ const AdminPanel = () => {
     }
   };
 
+  const queryClient = useQueryClient();
+
   const handleAddProduct = async (data: any) => {
+    // Verificar se o usuário está autenticado
+    if (!user?.isAdmin) {
+      toast({
+        title: "Acesso Negado",
+        description: "Você precisa estar logado como administrador.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       console.log("Tentando adicionar produto:", data);
       
       // Usando apiRequest para enviar credenciais corretamente
-      await apiRequest("POST", "/api/products", data);
+      const response = await apiRequest("POST", "/api/products", data);
+      const newProduct = await response.json();
       
       setIsAddProductOpen(false);
-      refetch();
+      
+      // Invalidar e refazer a query para atualizar a lista
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
       toast({
         title: "Sucesso",
         description: "Produto adicionado com sucesso!",
@@ -314,18 +332,36 @@ const AdminPanel = () => {
   const handleEditProduct = async (data: any) => {
     if (!selectedProduct) return;
     
-
+    // Verificar se o usuário está autenticado
+    if (!user?.isAdmin) {
+      toast({
+        title: "Acesso Negado",
+        description: "Você precisa estar logado como administrador.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Editando produto:", selectedProduct.id, data);
     
     try {
-      await apiRequest("PUT", `/api/products/${selectedProduct.id}`, data);
+      const response = await apiRequest("PUT", `/api/products/${selectedProduct.id}`, data);
+      const updatedProduct = await response.json();
+      
+      console.log("Produto atualizado com sucesso:", updatedProduct);
       
       setIsEditProductOpen(false);
-      refetch();
+      
+      // Invalidar e refazer a query para atualizar a lista
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
       toast({
         title: "Sucesso",
         description: "Produto atualizado com sucesso!",
       });
     } catch (error) {
+      console.error("Erro ao atualizar produto:", error);
+      
       // Verificar se é erro de sessão expirada
       handleApiError(error);
 
@@ -340,16 +376,35 @@ const AdminPanel = () => {
   const handleDeleteProduct = async () => {
     if (!selectedProduct) return;
     
+    // Verificar se o usuário está autenticado
+    if (!user?.isAdmin) {
+      toast({
+        title: "Acesso Negado",
+        description: "Você precisa estar logado como administrador.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log("Deletando produto:", selectedProduct.id);
+    
     try {
-      await apiRequest("DELETE", `/api/products/${selectedProduct.id}`);
+      const response = await apiRequest("DELETE", `/api/products/${selectedProduct.id}`);
+      
+      console.log("Produto deletado com sucesso, status:", response.status);
       
       setIsDeleteConfirmOpen(false);
-      refetch();
+      
+      // Invalidar e refazer a query para atualizar a lista
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
       toast({
         title: "Sucesso",
         description: "Produto excluído com sucesso!",
       });
     } catch (error) {
+      console.error("Erro ao excluir produto:", error);
+      
       // Verificar se é erro de sessão expirada
       handleApiError(error);
       
@@ -362,36 +417,31 @@ const AdminPanel = () => {
   };
   
   const handleAdjustStock = async (data: { quantity: number, notes: string }) => {
-    if (!selectedProduct || !stockAction) return;
-    
+    if (!selectedProduct) return;
+
     try {
-      // Converter quantidade para positivo ou negativo dependendo da ação
-      const stockChange = stockAction === "add" ? 
-        Math.abs(data.quantity) : 
-        -Math.abs(data.quantity);
-      
-      // Determinar o tipo de transação
-      const transactionType = stockAction === "add" ? "purchase" : "adjustment";
-      
+      const newStock = stockAction === 'add' 
+        ? (selectedProduct.stock || 0) + data.quantity
+        : Math.max(0, (selectedProduct.stock || 0) - data.quantity);
+
       await apiRequest("POST", "/api/inventory/update-stock", {
         productId: selectedProduct.id,
-        stockChange,
-        transactionType,
+        stockChange: Math.abs(data.quantity),
+        transactionType: stockAction === 'add' ? "purchase" : "adjustment",
         notes: data.notes || ""
       });
       
-      setIsAdjustStockOpen(false);
-      refetch();
       toast({
-        title: "Sucesso",
-        description: stockAction === "add" ? 
-          "Estoque adicionado com sucesso!" : 
-          "Estoque reduzido com sucesso!",
+        title: "Estoque atualizado",
+        description: `Estoque do produto "${selectedProduct.name}" foi ${stockAction === 'add' ? 'adicionado' : 'removido'} com sucesso.`,
       });
-    } catch (error) {
-      // Verificar se é erro de sessão expirada
-      handleApiError(error);
+
+      setIsAdjustStockOpen(false);
       
+      // Invalidar e refazer a query para atualizar a lista
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    } catch (error) {
+      console.error('Erro ao ajustar estoque:', error);
       toast({
         title: "Erro",
         description: "Erro ao ajustar o estoque. Tente novamente.",
@@ -400,44 +450,8 @@ const AdminPanel = () => {
     }
   };
 
-  // Função para rolar para o topo da página
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  // Função para rolar para o final da página
-  const scrollToBottom = () => {
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: 'smooth'
-    });
-  };
-
   return (
     <div className="p-4 md:p-6 relative">
-      {/* Botões flutuantes para navegação na página */}
-      <div className="fixed right-6 bottom-24 z-50 flex flex-col gap-2">
-        <Button 
-          onClick={scrollToTop} 
-          size="icon" 
-          className="bg-white/80 backdrop-blur-sm shadow-lg hover:bg-accent hover:text-white rounded-full transition-all"
-          aria-label="Rolar para o topo"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
-        </Button>
-        <Button 
-          onClick={scrollToBottom} 
-          size="icon" 
-          className="bg-white/80 backdrop-blur-sm shadow-lg hover:bg-accent hover:text-white rounded-full transition-all"
-          aria-label="Rolar para o final"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
-        </Button>
-      </div>
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold font-montserrat">Painel Administrativo</h1>
@@ -804,16 +818,13 @@ const AdminPanel = () => {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-2 md:space-y-0">
                 <CardTitle>Gerenciar Produtos</CardTitle>
                 <div className="flex space-x-2">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-                    <Input
-                      type="search"
-                      placeholder="Buscar produtos..."
-                      className="pl-8 w-full md:w-[250px]"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
+                  <Input
+                    type="search"
+                    placeholder="Buscar produtos..."
+                    className="w-full md:w-[250px]"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                   <Button onClick={() => setIsAddProductOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" /> Adicionar
                   </Button>
@@ -964,10 +975,9 @@ const AdminPanel = () => {
             <div className="bg-white p-4 rounded-md shadow-sm mb-6">
               <div className="flex flex-col md:flex-row gap-4 md:items-center mb-4">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Buscar por cliente, email, telefone..."
-                    className="pl-10"
+                    className="w-full"
                     value={salesSearchTerm}
                     onChange={(e) => setSalesSearchTerm(e.target.value)}
                   />
@@ -1358,34 +1368,6 @@ const AdminPanel = () => {
             <DialogTitle>Adicionar Novo Produto</DialogTitle>
           </DialogHeader>
           <ProductForm onSubmit={handleAddProduct} />
-
-          {/* Botões de navegação dentro do modal */}
-          <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-2">
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o topo do formulário"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            </Button>
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o final do formulário"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 
@@ -1401,34 +1383,6 @@ const AdminPanel = () => {
               initialData={selectedProduct} 
             />
           )}
-          
-          {/* Botões de navegação dentro do modal */}
-          <div className="fixed right-4 top-1/2 transform -translate-y-1/2 z-50 flex flex-col gap-2">
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: 0, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o topo do formulário"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-            </Button>
-            <Button 
-              onClick={() => {
-                const modal = document.querySelector('div[role="dialog"]');
-                if (modal) modal.scrollTo({ top: modal.scrollHeight, behavior: 'smooth' });
-              }} 
-              size="icon" 
-              variant="secondary"
-              className="h-8 w-8 rounded-full shadow-md"
-              aria-label="Rolar para o final do formulário"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-            </Button>
-          </div>
         </DialogContent>
       </Dialog>
 
@@ -1682,9 +1636,8 @@ const AdminPanel = () => {
               date: formData.get('date') as string,
               notes: formData.get('notes') as string
             };
-            
             // Validar dados obrigatórios
-            if (!saleData.customer || !saleData.email || !saleData.phone || saleProducts.length === 0) {
+            if (!saleData.customer || !saleData.phone || saleProducts.length === 0) {
               toast({
                 title: "Dados incompletos",
                 description: "Preencha todos os campos obrigatórios e adicione pelo menos um produto.",
@@ -1692,49 +1645,48 @@ const AdminPanel = () => {
               });
               return;
             }
-            
             handleAddSale(saleData);
           }}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                  <Label htmlFor="customer">Nome do Cliente *</Label>
-                  <Input id="customer" name="customer" placeholder="Nome completo" required />
+                <Label htmlFor="customer">Nome do Cliente *</Label>
+                <Input id="customer" name="customer" placeholder="Nome completo" required />
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input id="email" name="email" type="email" placeholder="email@exemplo.com" required />
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" placeholder="email@exemplo.com" />
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone *</Label>
-                  <Input id="phone" name="phone" placeholder="(00) 00000-0000" required />
+                <Label htmlFor="phone">Telefone *</Label>
+                <Input id="phone" name="phone" placeholder="(00) 00000-0000" required />
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="date">Data da Venda *</Label>
-                  <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required />
+                <Label htmlFor="date">Data da Venda *</Label>
+                <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} required />
               </div>
             </div>
             
             <div className="space-y-2 mt-4">
               <div className="flex justify-between items-center">
-                  <Label>Produtos *</Label>
+                <Label>Produtos *</Label>
                 <Button 
                   variant="outline" 
                   type="button" 
                   size="sm" 
                   className="h-8"
                   onClick={addProductToSale}
-                    disabled={!products || products.length === 0}
                 >
-                  <Plus className="h-4 w-4 mr-1" /> Adicionar Produto
+                  <Plus className="h-4 w-4 mr-1" /> Selecionar Produto
                 </Button>
               </div>
+              
               
                 {saleProducts.length === 0 ? (
                   <div className="border rounded-md p-8 text-center text-gray-500">
                     <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
                     <p>Nenhum produto adicionado à venda</p>
-                    <p className="text-sm">Clique em "Adicionar Produto" para começar</p>
+                    <p className="text-sm">Clique em "Selecionar Produto" para começar</p>
                   </div>
                 ) : (
               <div className="border rounded-md">
@@ -1820,6 +1772,58 @@ const AdminPanel = () => {
             </Button>
           </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Modal de seleção de produtos para venda */}
+      <Dialog open={isProductSelectionOpen} onOpenChange={setIsProductSelectionOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Selecionar Produto</DialogTitle>
+            <DialogDescription>
+              Selecione um produto criado pelo admin para adicionar à venda.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {adminProducts && adminProducts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {adminProducts.map((product) => (
+                  <div 
+                    key={product.id} 
+                    className="border rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => selectProductForSale(product)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <img 
+                        src={product.imageUrl} 
+                        alt={product.name}
+                        className="h-12 w-12 rounded object-cover"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-sm">{product.name}</h3>
+                        <p className="text-xs text-gray-500">{product.category}</p>
+                        <p className="text-sm font-semibold text-green-600">{product.formattedPrice}</p>
+                        <p className="text-xs text-gray-500">Estoque: {product.stock || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <p>Nenhum produto criado pelo admin encontrado.</p>
+                <p className="text-sm">Crie produtos primeiro para poder adicioná-los às vendas.</p>
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProductSelectionOpen(false)}>
+              Cancelar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       

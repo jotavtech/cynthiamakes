@@ -44,11 +44,12 @@ export interface IStorage {
   
   // Product methods
   getProducts(): Promise<DisplayProduct[]>;
+  getAdminProducts(): Promise<DisplayProduct[]>;
   getProductById(id: number): Promise<DisplayProduct | undefined>;
   getProductsByCategory(category: string): Promise<DisplayProduct[]>;
   getFeaturedProducts(): Promise<DisplayProduct[]>;
-  createProduct(product: InsertProduct): Promise<DisplayProduct>;
-  updateProduct(id: number, product: Partial<InsertProduct>): Promise<DisplayProduct | undefined>;
+  createProduct(insertProduct: InsertProduct, userId?: number): Promise<DisplayProduct>;
+  updateProduct(id: number, updateData: Partial<InsertProduct>): Promise<DisplayProduct | undefined>;
   deleteProduct(id: number): Promise<boolean>;
   
   // Inventory methods
@@ -249,6 +250,12 @@ export class MemStorage implements IStorage {
     return Array.from(this.products.values()).map(product => this.formatProduct(product));
   }
 
+  async getAdminProducts(): Promise<DisplayProduct[]> {
+    return Array.from(this.products.values())
+      .filter(product => product.createdBy !== null)
+      .map(product => this.formatProduct(product));
+  }
+
   async getProductById(id: number): Promise<DisplayProduct | undefined> {
     const product = this.products.get(id);
     if (!product) return undefined;
@@ -268,12 +275,11 @@ export class MemStorage implements IStorage {
       .map(product => this.formatProduct(product));
   }
 
-  async createProduct(insertProduct: InsertProduct): Promise<DisplayProduct> {
+  async createProduct(insertProduct: InsertProduct, userId?: number): Promise<DisplayProduct> {
     const id = this.currentProductId++;
     const now = new Date();
     
-    // Construímos manualmente para evitar problemas de tipo
-    const product: Product = {
+    const newProduct: Product = {
       id,
       name: insertProduct.name,
       description: insertProduct.description,
@@ -287,12 +293,12 @@ export class MemStorage implements IStorage {
       stock: insertProduct.stock || 0,
       lowStockThreshold: insertProduct.lowStockThreshold || 5,
       sku: insertProduct.sku || `SKU-${id}`,
+      createdBy: userId || null,
       createdAt: now
     };
     
-    this.products.set(id, product);
-    
-    return this.formatProduct(product);
+    this.products.set(id, newProduct);
+    return this.formatProduct(newProduct);
   }
   
   // Inventory management methods
@@ -377,13 +383,13 @@ export class MemStorage implements IStorage {
     };
   }
 
-  async updateProduct(id: number, updateProduct: Partial<InsertProduct>): Promise<DisplayProduct | undefined> {
+  async updateProduct(id: number, updateData: Partial<InsertProduct>): Promise<DisplayProduct | undefined> {
     const existingProduct = this.products.get(id);
     if (!existingProduct) return undefined;
     
     const updatedProduct = {
       ...existingProduct,
-      ...updateProduct
+      ...updateData
     };
     
     this.products.set(id, updatedProduct);
@@ -602,6 +608,7 @@ export class MemStorage implements IStorage {
 }
 
 // Use o armazenamento apropriado baseado no ambiente
-export const storage = process.env.DATABASE_URL && process.env.FORCE_MEMORY_STORAGE !== "true"
-  ? new DatabaseStorage() 
-  : new MemStorage();
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL não definida. Configure seu .env corretamente para usar o banco de dados real.");
+}
+export const storage = new DatabaseStorage();

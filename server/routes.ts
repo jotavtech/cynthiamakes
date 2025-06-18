@@ -106,8 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch products" });
     }
   });
-  
-  // Rotas específicas precisam vir antes de rotas com parâmetros
+
   app.get("/api/products/featured", async (req: Request, res: Response) => {
     try {
       const products = await storage.getFeaturedProducts();
@@ -115,6 +114,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching featured products:", error);
       res.status(500).json({ message: "Failed to fetch featured products" });
+    }
+  });
+
+  app.get("/api/products/admin", async (req: Request, res: Response) => {
+    try {
+      const products = await storage.getAdminProducts();
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching admin products:", error);
+      res.status(500).json({ message: "Failed to fetch admin products" });
     }
   });
 
@@ -151,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/products", isAdmin, async (req: Request, res: Response) => {
     try {
       const productData = insertProductSchema.parse(req.body);
-      const newProduct = await storage.createProduct(productData);
+      const newProduct = await storage.createProduct(productData, req.user?.id);
       
       // Log de auditoria
       if (req.user?.id) {

@@ -72,6 +72,7 @@ export const products = pgTable("products", {
   stock: integer("stock").default(0).notNull(),
   lowStockThreshold: integer("low_stock_threshold").default(5).notNull(),
   sku: text("sku").notNull().default(""),
+  createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

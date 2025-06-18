@@ -2,10 +2,12 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Search, ShoppingBag, Menu, X, Settings } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useAdmin } from "@/hooks/useAdmin";
 
 const Header = () => {
   const [location] = useLocation();
   const { cartItems, openCart } = useCart();
+  const { user } = useAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -18,6 +20,9 @@ const Header = () => {
   const toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
   };
+
+  // Verificar se deve mostrar a lupa (não mostrar se for admin na página admin)
+  const shouldShowSearch = !(user?.isAdmin && location === "/admin");
 
   const navLinks = [
     { name: "Início", path: "/" },
@@ -55,13 +60,15 @@ const Header = () => {
 
           {/* Search, Menu Icons */}
           <div className="flex items-center space-x-4">
-            <button 
-              onClick={toggleSearch}
-              className="p-2 hover:text-accent transition"
-              aria-label="Search"
-            >
-              <Search className="h-6 w-6" />
-            </button>
+            {shouldShowSearch && (
+              <button 
+                onClick={toggleSearch}
+                className="p-2 hover:text-accent transition"
+                aria-label="Search"
+              >
+                <Search className="h-6 w-6" />
+              </button>
+            )}
             
             <Link 
               href="/admin" 
@@ -117,7 +124,7 @@ const Header = () => {
       )}
 
       {/* Search Bar */}
-      {isSearchOpen && (
+      {isSearchOpen && shouldShowSearch && (
         <div className="bg-light border-t">
           <div className="container mx-auto px-4 py-3">
             <div className="relative">

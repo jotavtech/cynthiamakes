@@ -24,7 +24,7 @@ import {
   auditLogs
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNotNull } from "drizzle-orm";
 import { formatPrice } from "@/lib/utils";
 import { IStorage } from "./storage";
 import session from "express-session";
@@ -145,6 +145,14 @@ export class DatabaseStorage implements IStorage {
     return allProducts.map(this.formatProduct);
   }
 
+  async getAdminProducts(): Promise<DisplayProduct[]> {
+    const adminProducts = await db
+      .select()
+      .from(products)
+      .where(isNotNull(products.createdBy));
+    return adminProducts.map(this.formatProduct);
+  }
+
   async getProductById(id: number): Promise<DisplayProduct | undefined> {
     const [product] = await db.select().from(products).where(eq(products.id, id));
     return product ? this.formatProduct(product) : undefined;
@@ -169,10 +177,13 @@ export class DatabaseStorage implements IStorage {
     return featuredProducts.map(this.formatProduct);
   }
 
-  async createProduct(insertProduct: InsertProduct): Promise<DisplayProduct> {
+  async createProduct(insertProduct: InsertProduct, userId?: number): Promise<DisplayProduct> {
     const [product] = await db
       .insert(products)
-      .values(insertProduct)
+      .values({
+        ...insertProduct,
+        createdBy: userId || null
+      })
       .returning();
     
     return this.formatProduct(product);

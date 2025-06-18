@@ -96,7 +96,10 @@ async function seedDatabase() {
   ];
 
   for (const product of initialProducts) {
-    await db.insert(products).values(product).onConflictDoNothing();
+    await db.insert(products).values({
+      ...product,
+      createdBy: null // Produtos do seed não têm createdBy
+    }).onConflictDoNothing();
   }
 
   console.log("✅ Database seeded successfully!");
