@@ -20,7 +20,6 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
@@ -33,7 +32,7 @@ export default defineConfig({
     port: 5000,
     proxy: {
       '/api': {
-        target: 'https://cynthiamakes1.com.br',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       }
