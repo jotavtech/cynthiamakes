@@ -116,7 +116,7 @@ export class MemStorage implements IStorage {
     import('memorystore').then((memorystore) => {
       const MemoryStore = memorystore.default(session);
       this.sessionStore = new MemoryStore({
-        checkPeriod: false // Desabilita limpeza automática de sessões
+        checkPeriod: 86400000 * 365 // Verificação a cada ano (efetivamente desabilita)
       });
     });
     

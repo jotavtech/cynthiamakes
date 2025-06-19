@@ -57,11 +57,11 @@ this.sessionStore = new PostgresSessionStore({
 
 ### 4. MemStorage (`server/storage.ts`)
 **Antes**: Configuração de limpeza automática a cada 24h
-**Depois**: Desabilitada limpeza automática
+**Depois**: Configurado para verificação anual (efetivamente desabilita limpeza automática)
 
 ```typescript
 this.sessionStore = new MemoryStore({
-  checkPeriod: false // Desabilita limpeza automática de sessões
+  checkPeriod: 86400000 * 365 // Verificação a cada ano (efetivamente desabilita)
 });
 ```
 
