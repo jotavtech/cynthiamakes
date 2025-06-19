@@ -3,7 +3,6 @@ import { Star, StarHalf, Eye } from "lucide-react";
 import { DisplayProduct } from "@shared/schema";
 import ProductQuickView from "./ProductQuickView";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
-import { useCart } from "@/hooks/useCart";
 
 interface ProductCardProps {
   product: DisplayProduct;
@@ -11,7 +10,6 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const { openCart } = useCart();
   
   const openQuickView = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -75,7 +73,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
           buttonText="Adicionar ao Carrinho"
           size="default"
           showIcon={true}
-          openCartDrawer={openCart}
         />
       </div>
       

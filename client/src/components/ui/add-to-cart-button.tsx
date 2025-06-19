@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/useCart";
 
 interface AddToCartButtonProps {
   productId: number;
@@ -13,7 +14,6 @@ interface AddToCartButtonProps {
   buttonText?: string;
   quantity?: number;
   onSuccess?: () => void;
-  openCartDrawer: () => void;
 }
 
 export function AddToCartButton({
@@ -25,14 +25,11 @@ export function AddToCartButton({
   showIcon = true,
   buttonText = "Adicionar ao Carrinho",
   quantity = 1,
-  onSuccess,
-  openCartDrawer
+  onSuccess
 }: AddToCartButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  
-  // ID de sessão fixo para consistência
-  const sessionId = '99i47ng8zigy94xt079q59';
+  const { addToCart, setIsCartOpen } = useCart();
 
   const handleAddToCart = async () => {
     if (isLoading) return;
@@ -41,37 +38,7 @@ export function AddToCartButton({
     console.log(`[AddToCartButton] Adicionando produto ${productId} ao carrinho`);
     
     try {
-      // Verificar se o item já existe no carrinho
-      const cartResponse = await fetch(`/api/cart/${sessionId}`);
-      const cartItems = await cartResponse.json();
-      const existingItem = cartItems.find((item: { productId: number }) => item.productId === productId);
-      
-      let response;
-      
-      if (existingItem) {
-        // Se o item já existe, atualizar a quantidade
-        const newQuantity = existingItem.quantity + quantity;
-        response = await fetch(`/api/cart/${existingItem.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quantity: newQuantity })
-        });
-      } else {
-        // Se o item não existe, adicioná-lo
-        response = await fetch('/api/cart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            productId,
-            quantity,
-            sessionId
-          })
-        });
-      }
-      
-      if (!response.ok) {
-        throw new Error("Falha ao adicionar produto");
-      }
+      await addToCart(productId, quantity);
       
       const productLabel = productName ? productName : `Produto #${productId}`;
       toast({
@@ -80,16 +47,18 @@ export function AddToCartButton({
       });
       
       // Abrir o drawer do carrinho
-      openCartDrawer();
+      setIsCartOpen(true);
       
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      // Apenas registrar o erro no console, sem exibir toast de erro para o usuário
-      console.log(`[AddToCartButton] Erro ao adicionar produto ${productId}:`, error);
-      // Se a operação foi bem-sucedida (o console mostra que o produto está sendo adicionado),
-      // não exibiremos mensagem de erro para o usuário
+      console.error(`[AddToCartButton] Erro ao adicionar produto ${productId}:`, error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar o produto ao carrinho.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

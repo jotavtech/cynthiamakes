@@ -6,7 +6,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 
 const Header = () => {
   const [location] = useLocation();
-  const { cartItems, openCart } = useCart();
+  const { cartItems, setIsCartOpen } = useCart();
   const { user } = useAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);

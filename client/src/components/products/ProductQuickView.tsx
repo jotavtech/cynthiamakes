@@ -2,7 +2,6 @@ import { useState } from "react";
 import { X, Star, StarHalf, Plus, Minus } from "lucide-react";
 import { DisplayProduct } from "@shared/schema";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
-import { useCart } from "@/hooks/useCart";
 
 interface ProductQuickViewProps {
   product: DisplayProduct;
@@ -12,7 +11,6 @@ interface ProductQuickViewProps {
 
 const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) => {
   const [quantity, setQuantity] = useState(1);
-  const { openCart } = useCart();
 
   if (!isOpen) return null;
 
@@ -117,7 +115,6 @@ const ProductQuickView = ({ product, isOpen, onClose }: ProductQuickViewProps) =
               quantity={quantity}
               buttonText="Adicionar ao Carrinho"
               onSuccess={onClose}
-              openCartDrawer={openCart}
             />
           </div>
         </div>

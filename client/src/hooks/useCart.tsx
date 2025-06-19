@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { CartContext } from "@/App";
+import { CartContext } from "@/context/CartContext";
 
 // Hook simplificado para acessar o contexto do carrinho
 export function useCart() {
