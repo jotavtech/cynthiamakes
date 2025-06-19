@@ -4,9 +4,15 @@ import ProductFilters from "@/components/products/ProductFilters";
 import ProductGrid from "@/components/products/ProductGrid";
 import { Helmet } from "react-helmet";
 
+interface Filters {
+  categories: string[];
+  priceRanges: string[];
+  brands: string[];
+}
+
 const ProductsPage = () => {
   const [location] = useLocation();
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     categories: [],
     priceRanges: [],
     brands: [],
@@ -26,7 +32,7 @@ const ProductsPage = () => {
     }
   }, [location]);
 
-  const handleFilterChange = (newFilters: any) => {
+  const handleFilterChange = (newFilters: Filters) => {
     setFilters(newFilters);
   };
 

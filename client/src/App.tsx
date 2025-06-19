@@ -22,12 +22,18 @@ export const CartContext = createContext<{
   closeCart: () => void;
   cartItems: CartItemWithProduct[];
   refreshCart: () => Promise<void>;
+  updateCartItemQuantity: (id: number, quantity: number) => Promise<void>;
+  removeFromCart: (id: number) => Promise<void>;
+  clearCart: () => Promise<void>;
 }>({
   isCartOpen: false,
   openCart: () => {},
   closeCart: () => {},
   cartItems: [],
   refreshCart: async () => {},
+  updateCartItemQuantity: async () => {},
+  removeFromCart: async () => {},
+  clearCart: async () => {},
 });
 
 function Router() {
@@ -84,13 +90,63 @@ function App() {
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
 
+  // Função para atualizar quantidade de um item
+  const updateCartItemQuantity = async (id: number, quantity: number) => {
+    try {
+      const response = await fetch(`/api/cart/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity })
+      });
+      
+      if (!response.ok) throw new Error("Falha ao atualizar quantidade");
+      
+      await refreshCart();
+    } catch (error) {
+      console.error("[App] Erro ao atualizar quantidade:", error);
+    }
+  };
+
+  // Função para remover item do carrinho
+  const removeFromCart = async (id: number) => {
+    try {
+      const response = await fetch(`/api/cart/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error("Falha ao remover item");
+      
+      await refreshCart();
+    } catch (error) {
+      console.error("[App] Erro ao remover item:", error);
+    }
+  };
+
+  // Função para limpar carrinho
+  const clearCart = async () => {
+    try {
+      const response = await fetch(`/api/cart/clear/${sessionId}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) throw new Error("Falha ao limpar carrinho");
+      
+      await refreshCart();
+    } catch (error) {
+      console.error("[App] Erro ao limpar carrinho:", error);
+    }
+  };
+
   return (
     <CartContext.Provider value={{ 
       isCartOpen, 
       openCart, 
       closeCart, 
       cartItems,
-      refreshCart
+      refreshCart,
+      updateCartItemQuantity,
+      removeFromCart,
+      clearCart
     }}>
       <TooltipProvider>
         <Header />

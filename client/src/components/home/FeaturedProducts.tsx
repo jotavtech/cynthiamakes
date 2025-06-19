@@ -3,8 +3,11 @@ import { Loader2 } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 import { DisplayProduct } from "@shared/schema";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
+import { useCartUI } from "@/context/CartUIContext";
 
 const FeaturedProducts = () => {
+  const { openCart } = useCartUI();
+  
   const { data: featuredProducts, isLoading, error } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products/featured"],
   });
@@ -30,7 +33,7 @@ const FeaturedProducts = () => {
         ) : featuredProducts && featuredProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {featuredProducts.map((product) => (
-              <FeaturedProductCard key={product.id} product={product} />
+              <FeaturedProductCard key={product.id} product={product} openCartDrawer={openCart} />
             ))}
           </div>
         ) : (
@@ -45,9 +48,10 @@ const FeaturedProducts = () => {
 
 interface FeaturedProductCardProps {
   product: DisplayProduct;
+  openCartDrawer: () => void;
 }
 
-const FeaturedProductCard = ({ product }: FeaturedProductCardProps) => {
+const FeaturedProductCard = ({ product, openCartDrawer }: FeaturedProductCardProps) => {
   return (
     <div className="bg-light p-6 rounded-lg flex flex-col items-center text-center">
       <img 
@@ -65,6 +69,7 @@ const FeaturedProductCard = ({ product }: FeaturedProductCardProps) => {
         productName={product.name} 
         className="w-full"
         variant="default"
+        openCartDrawer={openCartDrawer}
       />
     </div>
   );
