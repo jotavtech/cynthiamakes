@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useAdmin } from './useAdmin';
 import { useToast } from '@/hooks/use-toast';
 
-const SESSION_DURATION = 10 * 60 * 1000; // 10 minutos em ms
+const SESSION_DURATION = 30 * 60 * 1000; // 30 minutos em ms
 const CHECK_INTERVAL = 30 * 1000; // Verificar a cada 30 segundos
 
 export const useAdminSession = () => {
@@ -19,7 +19,7 @@ export const useAdminSession = () => {
         // Sessão expirou
         toast({
           title: "Sessão Expirada",
-          description: "Sua sessão administrativa expirou (10 min). Você será redirecionado para o login.",
+          description: "Sua sessão administrativa expirou (30 min). Você será redirecionado para o login.",
           variant: "destructive",
         });
         
@@ -60,7 +60,7 @@ export const useAdminSession = () => {
     if (status === 401 || errorData?.code === 'SESSION_EXPIRED') {
       toast({
         title: "Sessão Expirada",
-        description: "Sua sessão administrativa expirou (10 min). Faça login novamente.",
+        description: "Sua sessão administrativa expirou (30 min). Faça login novamente.",
         variant: "destructive",
       });
       

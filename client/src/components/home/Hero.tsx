@@ -6,8 +6,8 @@ const Hero = () => {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&h=1000&q=80" 
-          alt="Coleção de maquiagens" 
+          src="https://res.cloudinary.com/dzwfuzxxw/image/upload/v1750338312/cynthiamakeup_xgkzv0.webp" 
+          alt="Cynthia Makeup - Produtos de beleza" 
           className="w-full h-full object-cover" 
         />
         <div className="absolute inset-0 bg-black bg-opacity-30"></div>
