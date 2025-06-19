@@ -24,7 +24,11 @@ export function useAdmin() {
   } = useQuery({
     queryKey: ['/api/user'],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    initialData: getStoredUser()
+    initialData: getStoredUser(),
+    refetchInterval: false, // Não refetch automaticamente
+    refetchOnWindowFocus: false, // Não refetch quando a janela ganha foco
+    staleTime: 5 * 60 * 1000, // Dados válidos por 5 minutos
+    gcTime: 10 * 60 * 1000, // Manter em cache por 10 minutos
   });
 
   // Mutation para fazer login
@@ -40,8 +44,8 @@ export function useAdmin() {
       if (user.isAdmin) {
         localStorage.setItem('adminUser', JSON.stringify(user));
         
-        // Redireciona diretamente para a área administrativa
-        window.location.href = '/admin';
+        // Removido redirecionamento automático - deixar o React Router lidar com isso
+        // window.location.href = '/admin';
       }
       
       toast({
