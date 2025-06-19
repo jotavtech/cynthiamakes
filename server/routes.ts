@@ -11,10 +11,17 @@ import { v2 as cloudinary } from 'cloudinary';
 
 // Configuração do Cloudinary
 cloudinary.config({
-  cloud_name: 'dzwfuzxxw',
-  api_key: '888348989441951',
-  api_secret: 'SoIbMkMvEBoth_Xbt0I8Ew96JuY',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dzwfuzxxw',
+  api_key: process.env.CLOUDINARY_API_KEY || '888348989441951',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'SoIbMkMvEBoth_Xbt0I8Ew96JuY',
   secure: true
+});
+
+// Verificar se as credenciais estão configuradas
+console.log('Cloudinary Config:', {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dzwfuzxxw',
+  api_key: process.env.CLOUDINARY_API_KEY ? '***' : '888348989441951',
+  api_secret: process.env.CLOUDINARY_API_SECRET ? '***' : 'SoIbMkMvEBoth_Xbt0I8Ew96JuY'
 });
 
 // Configuração do multer para upload de arquivos
@@ -71,13 +78,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dataURI = `data:${req.file.mimetype};base64,${base64Image}`;
 
       // Upload para o Cloudinary
-      const result = await new Promise((resolve, reject) => {
+      const result = await new Promise<any>((resolve, reject) => {
         cloudinary.uploader.upload(dataURI, {
           folder: 'products',
           resource_type: 'auto'
         }, (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
+          if (error) {
+            console.error("Cloudinary upload error:", error);
+            reject(error);
+          } else {
+            resolve(result);
+          }
         });
       });
       
@@ -88,9 +99,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         size: req.file.size,
         mimetype: req.file.mimetype
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error);
-      res.status(500).json({ message: "Erro ao fazer upload da imagem" });
+      
+      // Fornecer mensagens de erro mais específicas
+      let errorMessage = "Erro ao fazer upload da imagem";
+      
+      if (error.message) {
+        if (error.message.includes('Invalid api_key')) {
+          errorMessage = "Chave da API do Cloudinary inválida. Verifique suas credenciais.";
+        } else if (error.message.includes('Invalid signature')) {
+          errorMessage = "Assinatura inválida do Cloudinary. Verifique suas credenciais.";
+        } else if (error.message.includes('cloud_name')) {
+          errorMessage = "Nome da cloud do Cloudinary inválido. Verifique suas credenciais.";
+        } else {
+          errorMessage = `Erro do Cloudinary: ${error.message}`;
+        }
+      }
+      
+      res.status(500).json({ message: errorMessage });
     }
   });
   

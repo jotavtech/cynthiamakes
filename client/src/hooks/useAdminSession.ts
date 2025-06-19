@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const SESSION_DURATION = 30 * 60 * 1000; // 30 minutos em ms
 const CHECK_INTERVAL = 30 * 1000; // Verificar a cada 30 segundos
+const INITIAL_DELAY = 5 * 1000; // Aguardar 5 segundos antes da primeira verificação
 
 export const useAdminSession = () => {
   const { user, logout } = useAdmin();
@@ -83,12 +84,20 @@ export const useAdminSession = () => {
   useEffect(() => {
     if (!user?.isAdmin) return;
 
-    // Verificar sessão periodicamente
-    const intervalId = setInterval(checkSession, CHECK_INTERVAL);
+    // Aguardar um tempo inicial antes de começar a verificar a sessão
+    const initialTimer = setTimeout(() => {
+      // Verificar sessão periodicamente
+      const intervalId = setInterval(checkSession, CHECK_INTERVAL);
 
-    // Limpar interval quando o componente desmonta ou usuário não é mais admin
+      // Limpar interval quando o componente desmonta ou usuário não é mais admin
+      return () => {
+        clearInterval(intervalId);
+      };
+    }, INITIAL_DELAY);
+
+    // Limpar timer inicial quando o componente desmonta
     return () => {
-      clearInterval(intervalId);
+      clearTimeout(initialTimer);
     };
   }, [user?.isAdmin, checkSession]);
 

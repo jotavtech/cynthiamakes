@@ -1,6 +1,6 @@
 export const CLOUDINARY_CONFIG = {
   cloudName: 'dzwfuzxxw',
-  uploadPreset: 'ml_default',
+  uploadPreset: 'cynthiamakes',
 };
 
 export const uploadImageToCloudinary = async (file: File): Promise<string> => {
@@ -28,10 +28,13 @@ export const uploadImageToCloudinary = async (file: File): Promise<string> => {
       console.error('Erro na resposta do Cloudinary:', errorData);
       
       if (response.status === 400) {
+        if (errorData.error?.message?.includes('upload_preset')) {
+          throw new Error('Upload preset inválido. Verifique a configuração do Cloudinary.');
+        }
         throw new Error('Configuração inválida do Cloudinary. Verifique suas credenciais.');
       }
       
-      throw new Error(`Erro no servidor do Cloudinary (${response.status})`);
+      throw new Error(`Erro no servidor do Cloudinary (${response.status}): ${errorData.error?.message || 'Erro desconhecido'}`);
     }
 
     const data = await response.json();
