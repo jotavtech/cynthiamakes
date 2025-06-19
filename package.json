@@ -4,14 +4,16 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "build:frontend": "vite build",
-    "start": "NODE_ENV=production node dist/index.js",
-    "check": "tsc",
-    "db:push": "drizzle-kit push",
-    "deploy:hostinger": "node build-for-hostinger.mjs",
-    "deploy:prepare": "node build-for-hostinger.mjs"
+    "dev": "tsx watch server/index.ts",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start": "node dist/server/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx server/seed.ts",
+    "db:init": "tsx server/init-db.ts",
+    "show-ip": "node -e \"const os = require('os'); const interfaces = os.networkInterfaces(); Object.keys(interfaces).forEach(name => { interfaces[name].forEach(iface => { if (iface.family === 'IPv4' && !iface.internal) console.log('Network IP:', iface.address); }); }); console.log('Local IP:', 'localhost');\""
   },
   "dependencies": {
     "@cloudinary/react": "^1.14.3",

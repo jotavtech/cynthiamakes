@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Configuração do CORS
 app.use(cors({
-  origin: ['https://cynthiamakes1.com.br', 'http://localhost:3000'],
+  origin: true, // Permitir qualquer origem
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -24,7 +24,7 @@ app.use(cors({
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['https://cynthiamakes1.com.br', 'http://localhost:3000'],
+    origin: true, // Permitir qualquer origem
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -90,5 +90,10 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    log(`Server accessible at:`);
+    log(`- Local: http://localhost:${port}`);
+    log(`- Network: http://0.0.0.0:${port}`);
+    log(`- Admin panel: http://localhost:${port}/admin`);
+    log(`- Admin panel (network): http://0.0.0.0:${port}/admin`);
   });
 })();

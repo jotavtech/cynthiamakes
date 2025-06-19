@@ -45,9 +45,12 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store: storage.sessionStore,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      // Remover maxAge fixo - será definido apenas no login do admin
-    }
+      secure: false, // Mudar para false para permitir HTTP em desenvolvimento
+      httpOnly: true,
+      sameSite: 'lax', // Permitir cross-site requests
+      maxAge: undefined, // Será definido apenas no login do admin
+    },
+    name: 'connect.sid' // Nome padrão do cookie
   };
 
   app.set("trust proxy", 1);
