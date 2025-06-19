@@ -130,10 +130,18 @@ const AdminPanel = () => {
   
   const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],
+    refetchInterval: 3000, // Refetch a cada 3 segundos
+    refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
+    staleTime: 0, // Dados sempre considerados stale
+    gcTime: 2 * 60 * 1000, // Manter em cache por 2 minutos
   });
 
   const { data: adminProducts } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products/admin"],
+    refetchInterval: 3000, // Refetch a cada 3 segundos
+    refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
+    staleTime: 0, // Dados sempre considerados stale
+    gcTime: 2 * 60 * 1000, // Manter em cache por 2 minutos
   });
   
   const filteredProducts = products?.filter(product => 
@@ -297,7 +305,14 @@ const AdminPanel = () => {
       setIsAddProductOpen(false);
       
       // Invalidar e refazer a query para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      // Forçar refetch imediato
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
+      
+      // Também invalidar queries relacionadas
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/featured"] });
       
       toast({
         title: "Sucesso",
@@ -350,7 +365,14 @@ const AdminPanel = () => {
       setIsEditProductOpen(false);
       
       // Invalidar e refazer a query para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      // Forçar refetch imediato
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
+      
+      // Também invalidar queries relacionadas
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/featured"] });
       
       toast({
         title: "Sucesso",
@@ -392,7 +414,14 @@ const AdminPanel = () => {
       setIsDeleteConfirmOpen(false);
       
       // Invalidar e refazer a query para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      // Forçar refetch imediato
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
+      
+      // Também invalidar queries relacionadas
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/featured"] });
       
       toast({
         title: "Sucesso",
@@ -434,7 +463,14 @@ const AdminPanel = () => {
       setIsAdjustStockOpen(false);
       
       // Invalidar e refazer a query para atualizar a lista
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      // Forçar refetch imediato
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
+      
+      // Também invalidar queries relacionadas
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/admin"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products/featured"] });
     } catch (error) {
       console.error('Erro ao ajustar estoque:', error);
       toast({
