@@ -32,7 +32,6 @@ import {
   Tag
 } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
-import { useAdminSession } from "@/hooks/useAdminSession";
 import ProductForm from "./ProductForm";
 import { DisplayProduct } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -107,7 +106,6 @@ const SALES_HISTORY: SalesHistoryMonth[] = [];
 
 const AdminPanel = () => {
   const { user, logout, isLoggingOut } = useAdmin();
-  const { handleApiError } = useAdminSession();
   const { toast } = useToast();
 
   // Estados para controlar os modais
@@ -308,8 +306,7 @@ const AdminPanel = () => {
     } catch (error: any) {
       console.error("Erro ao adicionar produto:", error);
       
-      // Verificar se é erro de sessão expirada
-      handleApiError(error);
+      // Removida verificação de sessão expirada - não há mais logout automático
       
       let errorMessage = "Erro ao adicionar produto. Tente novamente.";
       
@@ -362,9 +359,8 @@ const AdminPanel = () => {
     } catch (error) {
       console.error("Erro ao atualizar produto:", error);
       
-      // Verificar se é erro de sessão expirada
-      handleApiError(error);
-
+      // Removida verificação de sessão expirada - não há mais logout automático
+      
       toast({
         title: "Erro",
         description: "Erro ao atualizar produto. Tente novamente.",
@@ -405,8 +401,7 @@ const AdminPanel = () => {
     } catch (error) {
       console.error("Erro ao excluir produto:", error);
       
-      // Verificar se é erro de sessão expirada
-      handleApiError(error);
+      // Removida verificação de sessão expirada - não há mais logout automático
       
       toast({
         title: "Erro",

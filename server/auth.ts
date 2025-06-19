@@ -48,7 +48,6 @@ export function setupAuth(app: Express) {
       secure: false, // Mudar para false para permitir HTTP em desenvolvimento
       httpOnly: true,
       sameSite: 'lax', // Permitir cross-site requests
-      maxAge: undefined, // Será definido apenas no login do admin
     },
     name: 'connect.sid' // Nome padrão do cookie
   };
@@ -111,15 +110,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    // Se o usuário é admin, definir tempo de sessão de 30 minutos
-    if (req.user?.isAdmin) {
-      req.session.cookie.maxAge = 1000 * 60 * 30; // 30 minutos
-      req.session.save((err) => {
-        if (err) {
-          console.error("Erro ao salvar sessão:", err);
-        }
-      });
-    }
+    // Removida a configuração de tempo de sessão - sessão sem expiração
     res.status(200).json(req.user);
   });
 

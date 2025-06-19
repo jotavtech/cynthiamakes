@@ -37,11 +37,14 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // Usar PostgreSQL store para sessões
+    // Usar PostgreSQL store para sessões sem expiração automática
     this.sessionStore = new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
-      tableName: 'session'
+      tableName: 'session',
+      // Configurações para evitar expiração automática
+      pruneSessionInterval: false, // Desabilita limpeza automática de sessões
+      ttl: 0 // Tempo de vida 0 = sem expiração
     });
   }
 

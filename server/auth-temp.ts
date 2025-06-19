@@ -36,7 +36,6 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore, // Usar o sessionStore do storage
     cookie: {
       secure: false, // Sempre false para desenvolvimento
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 semana
     }
   };
 

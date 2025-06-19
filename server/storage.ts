@@ -112,11 +112,11 @@ export class MemStorage implements IStorage {
     // Create memory session store - inicializar com um store temporário
     this.sessionStore = new (session.MemoryStore)();
     
-    // Substituir pelo memorystore quando disponível
+    // Substituir pelo memorystore quando disponível - sem expiração automática
     import('memorystore').then((memorystore) => {
       const MemoryStore = memorystore.default(session);
       this.sessionStore = new MemoryStore({
-        checkPeriod: 86400000 // prune expired entries every 24h
+        checkPeriod: false // Desabilita limpeza automática de sessões
       });
     });
     
