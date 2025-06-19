@@ -138,6 +138,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product routes
   app.get("/api/products", async (req: Request, res: Response) => {
     try {
+      // Headers para evitar cache
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       const products = await storage.getProducts();
       res.json(products);
     } catch (error) {
@@ -148,6 +155,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/products/featured", async (req: Request, res: Response) => {
     try {
+      // Headers para evitar cache
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       const products = await storage.getFeaturedProducts();
       res.json(products);
     } catch (error) {
@@ -158,6 +172,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/products/admin", async (req: Request, res: Response) => {
     try {
+      // Headers para evitar cache
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       const products = await storage.getAdminProducts();
       res.json(products);
     } catch (error) {

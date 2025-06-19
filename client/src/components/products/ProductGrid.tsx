@@ -19,10 +19,10 @@ const ProductGrid = ({ filters, sortOption }: ProductGridProps) => {
   
   const { data: products, isLoading, error } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],
-    refetchInterval: 3000,
+    refetchInterval: 1000,
     refetchOnWindowFocus: true,
     staleTime: 0,
-    gcTime: 2 * 60 * 1000,
+    gcTime: 0,
   });
 
   useEffect(() => {

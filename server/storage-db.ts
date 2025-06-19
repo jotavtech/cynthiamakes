@@ -149,11 +149,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAdminProducts(): Promise<DisplayProduct[]> {
-    const adminProducts = await db
-      .select()
-      .from(products)
-      .where(isNotNull(products.createdBy));
-    return adminProducts.map(this.formatProduct);
+    // Retornar todos os produtos para o painel admin, não apenas os que têm createdBy
+    const allProducts = await db.select().from(products);
+    return allProducts.map(this.formatProduct);
   }
 
   async getProductById(id: number): Promise<DisplayProduct | undefined> {

@@ -7,10 +7,10 @@ import { AddToCartButton } from "@/components/ui/add-to-cart-button";
 const FeaturedProducts = () => {
   const { data: featuredProducts, isLoading, error } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products/featured"],
-    refetchInterval: 3000,
+    refetchInterval: 1000,
     refetchOnWindowFocus: true,
     staleTime: 0,
-    gcTime: 2 * 60 * 1000,
+    gcTime: 0,
   });
 
   return (

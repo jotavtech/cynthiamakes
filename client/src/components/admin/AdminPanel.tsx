@@ -67,6 +67,7 @@ import { StockAdjustmentForm } from "./StockAdjustmentForm";
 import CategoryManager from "./CategoryManager";
 import BrandManager from "./BrandManager";
 import { useQueryClient } from "@tanstack/react-query";
+import TestProducts from "../TestProducts";
 
 // Tipos para o sistema de vendas
 type Order = {
@@ -130,18 +131,18 @@ const AdminPanel = () => {
   
   const { data: products, isLoading, error, refetch } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products"],
-    refetchInterval: 3000, // Refetch a cada 3 segundos
+    refetchInterval: 1000, // Refetch a cada 1 segundo
     refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
     staleTime: 0, // Dados sempre considerados stale
-    gcTime: 2 * 60 * 1000, // Manter em cache por 2 minutos
+    gcTime: 0, // Não manter em cache
   });
 
   const { data: adminProducts } = useQuery<DisplayProduct[]>({
     queryKey: ["/api/products/admin"],
-    refetchInterval: 3000, // Refetch a cada 3 segundos
+    refetchInterval: 1000, // Refetch a cada 1 segundo
     refetchOnWindowFocus: true, // Refetch quando a janela ganha foco
     staleTime: 0, // Dados sempre considerados stale
-    gcTime: 2 * 60 * 1000, // Manter em cache por 2 minutos
+    gcTime: 0, // Não manter em cache
   });
   
   const filteredProducts = products?.filter(product => 
@@ -502,7 +503,7 @@ const AdminPanel = () => {
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="grid grid-cols-7 md:w-[1050px] mb-6">
+        <TabsList className="grid grid-cols-8 md:w-[1200px] mb-6">
           <TabsTrigger value="overview">
             <LayoutDashboard className="mr-2 h-4 w-4" /> Visão Geral
           </TabsTrigger>
@@ -523,6 +524,9 @@ const AdminPanel = () => {
           </TabsTrigger>
           <TabsTrigger value="history">
             <History className="mr-2 h-4 w-4" /> Histórico
+          </TabsTrigger>
+          <TabsTrigger value="test">
+            <BarChart3 className="mr-2 h-4 w-4" /> Teste
           </TabsTrigger>
         </TabsList>
         
@@ -1390,9 +1394,15 @@ const AdminPanel = () => {
             </Card>
           </div>
         </TabsContent>
-      </Tabs>
 
-      {/* Add Product Dialog */}
+        {/* Aba de Teste */}
+        <TabsContent value="test">
+          <TestProducts />
+        </TabsContent>
+        
+      </Tabs>
+      
+      {/* Modal de adicionar produto */}
       <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>

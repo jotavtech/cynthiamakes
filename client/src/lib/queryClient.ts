@@ -62,11 +62,11 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "returnNull" }),
-      refetchInterval: 5000,
+      refetchInterval: 1000,
       refetchOnWindowFocus: true,
       staleTime: 0,
       retry: 1,
-      gcTime: 5 * 60 * 1000,
+      gcTime: 0,
     },
     mutations: {
       retry: 1,
